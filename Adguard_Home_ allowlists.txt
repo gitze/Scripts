@@ -1,0 +1,21 @@
+#################################
+# Adguard Home 
+# DNS allowlists
+# Domains from DNS allowlists will be allowed even if they are in any of the blocklists.
+#################################
+
+#BILD.de
+www.asadcdn.com
+de.ioam.de
+script.ioam.de
+tags.tiqcdn.com
+cdn.taboola.com
+json.bild.de
+code.bildstatic.de
+tagger.opecloud.com
+
+#Local
+diskstation
+
+#iPhone App - News Republic
+impression.appsflyer.com

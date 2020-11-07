@@ -1,7 +1,6 @@
 #################################
 # Adguard Home 
 # DNS allowlists
-# Domains from DNS allowlists will be allowed even if they are in any of the blocklists.
 #################################
 
 #BILD.de
@@ -17,5 +16,19 @@ tagger.opecloud.com
 #Local
 diskstation
 
-#iPhone App - News Republic
+#News Republic
 impression.appsflyer.com
+
+
+#BILD.de
+@@||www.asadcdn.com^$important
+@@||de.ioam.de^$important
+@@||script.ioam.de^$important
+@@||tags.tiqcdn.com^$important
+@@||cdn.taboola.com^$important
+@@||json.bild.de^$important
+@@||code.bildstatic.de^$important
+@@||tagger.opecloud.com^$important
+@@||diskstation^$important
+@@||impression.appsflyer.com^$important
+#@@||i16-tb.isnssdk.com^$important

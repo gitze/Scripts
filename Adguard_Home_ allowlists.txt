@@ -9,15 +9,23 @@ de.ioam.de
 script.ioam.de
 tags.tiqcdn.com
 cdn.taboola.com
-json.bild.de
+#json.bild.de
+bild.de
 code.bildstatic.de
 tagger.opecloud.com
 
 #Local
 diskstation
+local
 
 #News Republic
 impression.appsflyer.com
+
+telemetry.api.swiftkey.com
+
+#aliexpress
+s.click.aliexpress.com
+
 
 
 #BILD.de
@@ -32,3 +40,9 @@ impression.appsflyer.com
 @@||diskstation^$important
 @@||impression.appsflyer.com^$important
 #@@||i16-tb.isnssdk.com^$important
+@@||telemetry.api.swiftkey.com^$important
+@@||bild.de^$important
+@@||s.click.aliexpress.com^$important
+@@||assets.alicdn.com^$important
+@@||fs.ypncdn.com^$important
+@@||local^$important

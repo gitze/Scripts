@@ -20,6 +20,7 @@ local
 
 #News Republic
 impression.appsflyer.com
+isnssdk.com
 
 telemetry.api.swiftkey.com
 
@@ -39,7 +40,7 @@ s.click.aliexpress.com
 @@||tagger.opecloud.com^$important
 @@||diskstation^$important
 @@||impression.appsflyer.com^$important
-#@@||i16-tb.isnssdk.com^$important
+@@||isnssdk.com^$important
 @@||telemetry.api.swiftkey.com^$important
 @@||bild.de^$important
 @@||s.click.aliexpress.com^$important

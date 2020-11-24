@@ -22,9 +22,9 @@ emoncsm_url = "https://url"
 
 config = configparser.ConfigParser()
 config.read('./emoncms.conf')
-emoncsm_apikey = config.get('DEFAULT', 'emoncsm_apikey', fallback = emoncsm_apikey)
-emoncsm_url = config.get('DEFAULT', 'emoncsm_url', fallback = emoncsm_url)
-emoncsm_node = config.get('123SmartBMS', 'emoncsm_node', fallback = emoncsm_node)
+emoncsm_apikey = config.get('DEFAULT',     'emoncsm_apikey', fallback = emoncsm_apikey)
+emoncsm_url    = config.get('DEFAULT',     'emoncsm_url',    fallback = emoncsm_url)
+emoncsm_node   = config.get('123SmartBMS', 'emoncsm_node',   fallback = emoncsm_node)
 
 
 

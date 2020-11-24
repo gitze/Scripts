@@ -1,6 +1,5 @@
 
 .DS_Store
 SolarSystem/sensors_temp.py
-SolarSystem/veOK.py
 SolarSystem/test_serial.py
 SolarSystem/emoncms.conf

@@ -1,8 +1,6 @@
 
 .DS_Store
-SolarSystem/123ok.py
 SolarSystem/sensors_temp.py
 SolarSystem/veOK.py
-SolarSystem/config.conf
 SolarSystem/test_serial.py
 SolarSystem/emoncms.conf

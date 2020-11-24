@@ -1,0 +1,19 @@
+[Unit]
+Description=Victron MPPT Monitor
+After=syslog.target network.target
+
+[Service]
+#Type=simple
+#User=pi
+#Group=pio
+WorkingDirectory=/opt/solar
+ExecStart=/usr/bin/python3 /opt/solar/veOK.py 
+SyslogIdentifier=VictronMPPT
+StandardOutput=syslog
+StandardError=syslog
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+

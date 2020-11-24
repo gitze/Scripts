@@ -1,0 +1,19 @@
+[Unit]
+Description=Sensors Temeratur Monitor
+After=syslog.target
+
+[Service]
+Type=simple
+#User=pi
+#Group=pio
+WorkingDirectory=/opt/solar
+ExecStart=/usr/bin/python3 /opt/solar/sensors_temp.py
+SyslogIdentifier=SensorsTemperatur
+StandardOutput=syslog
+StandardError=syslog
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+

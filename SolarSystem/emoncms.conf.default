@@ -1,0 +1,9 @@
+[DEFAULT]
+emoncsm_apikey = "API_KEY"
+emoncsm_url = "https://emoncms.com"
+
+[123SmartBMS]
+emoncsm_node = "nodename"
+
+[Victron]
+emoncsm_node = "nodename"

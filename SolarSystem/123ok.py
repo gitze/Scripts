@@ -56,16 +56,18 @@ def isCheckSumOK(rawdata):
     checksumComp = binascii.hexlify(rawdata[-1:]).upper()
     checkRecordOK = checksumCalc == checksumComp
 
-    # check: postion1  = 00, da Battery Voltage < 128
-    # check: postion26 = 4, da 4 Battery verbaut
-    # check: postion5  <= 08, da CurrentIn Ampere < 288 
-    # check: postion8  <= 08, da CurrentIn Ampere < 288
-    # check: postion11  <= 08, da CurrentIn Ampere < 288
-    # check: postion52  == 02, da V-MIN Setting > 2.48 and < 3.84
-    # check: postion54  == 02, da V-MAX Setting > 2.48 and < 3.84
-    # check: postion56  == 02, da V-Balancing Setting > 2.48 and < 3.84
-
-    if extendetChecks == True:
+    if not checkRecordOK:
+        logit(fileout,"INPUT CRC Error: Calc {} Compare {} - Ergebnis: {}".format(checksumCalc, checksumComp, checkRecordOK))
+    #   print ("CHECKSUM: Calc {} Compare {} - Ergebnis: {}".format(checksumCalc, checksumComp, checkRecordOK))    
+    elif extendetChecks == True:
+        # check: postion1  = 00, da Battery Voltage < 128
+        # check: postion26 = 4, da 4 Battery verbaut
+        # check: postion5  <= 08, da CurrentIn Ampere < 288 
+        # check: postion8  <= 08, da CurrentIn Ampere < 288
+        # check: postion11  <= 08, da CurrentIn Ampere < 288
+        # check: postion52  == 02, da V-MIN Setting > 2.48 and < 3.84
+        # check: postion54  == 02, da V-MAX Setting > 2.48 and < 3.84
+        # check: postion56  == 02, da V-Balancing Setting > 2.48 and < 3.84
         extendetCheckOK = True and (rawdata[0] == 0) and (rawdata[25] == 4)
         if not extendetCheckOK:
             logit(fileout,"Extended Quality Check failed Voltage {}, No Battery {}".format(rawdata[0] , rawdata[25]))
@@ -79,9 +81,6 @@ def isCheckSumOK(rawdata):
             logit(fileout,"Extended Quality Check failed Voltage Nin/Max/Balaning values {}, {}, {}".format(rawdata[52-1], rawdata[54-1], rawdata[56-1]))
             checkRecordOK = extendetCheckOK
 
-    if not checkRecordOK:
-        logit(fileout,"INPUT CRC Error: Calc {} Compare {} - Ergebnis: {}".format(checksumCalc, checksumComp, checkRecordOK))
-    #   print ("CHECKSUM: Calc {} Compare {} - Ergebnis: {}".format(checksumCalc, checksumComp, checkRecordOK))    
     return checkRecordOK
 
 

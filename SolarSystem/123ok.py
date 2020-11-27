@@ -12,6 +12,7 @@ from urllib.parse import urlencode, quote_plus
 import time
 import datetime
 import configparser
+import logging.handlers
 import solar_logger
 
 
@@ -260,6 +261,8 @@ if __name__ == '__main__':
     #file_name_format = '{year:04d}{month:02d}{day:02d}-{hour:02d}{minute:02d}{second:02d}.log'
     file_name = '123smartbms.log'
     solar_logger.logger_setup(file_name, '/home/pi/')
+    logging.info("Starting 123SmartBMS Monitoring")
+
     # logging.debug('Debug messages are only sent to the logfile.')
     # logging.info('Info messages are not shown on the console, too.')
     # logging.warning('Warnings appear both on the console and in the logfile.')
@@ -270,7 +273,6 @@ if __name__ == '__main__':
     singleRecord = b""
     collectcycle = 0
     fileout = open("/home/pi/123smartbms.log", "a")
-    logging.info("Starting 123SmartBMS Monitoring")
     try:
         while True:
             singleRecord = readSerialData(SerialCon)

@@ -188,7 +188,7 @@ def readSerialData(SerialConsole):
                     logging.debug("INPUT OK [NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(NewRecord, ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
                     return rawdata
                 else:
-                    logging.warning(, "INPUT Error [NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(NewRecord, ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
+                    logging.warning( "INPUT Error [NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(NewRecord, ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
                     rawdata = b''
                     SerialByte = b''
                     ErrorCounter += 1
@@ -196,13 +196,13 @@ def readSerialData(SerialConsole):
                         time.sleep(0.5)
             elif (len(rawdata) < 58):
                 if ErrorCounter > 0:
-                    logging.warning(,"INPUT too short[NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(NewRecord, ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
+                    logging.warning("INPUT too short[NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(NewRecord, ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
                 rawdata = b''
                 ErrorCounter += 1
             elif len(rawdata) > 1000: 
                 SerialConsole.close()
                 SerialConsole.open()  
-                logging.warning(, "Serial Error: Starting Point not found after {} Bytes. Closing / Opening USB Device " . format(len(rawdata)))
+                logging.warning( "Serial Error: Starting Point not found after {} Bytes. Closing / Opening USB Device " . format(len(rawdata)))
                 rawdata = b''
                 SerialByte = b''
                 ErrorCounter += 1                
@@ -211,7 +211,7 @@ def readSerialData(SerialConsole):
                 rawdata = b''
                 ErrorCounter += 1
             else:
-                logging.critical,"Error Unexpected ELSE Statement in readSerialData()")
+                logging.critical("Error Unexpected ELSE Statement in readSerialData()")
 
             NewRecord=0
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 import os
@@ -218,7 +218,7 @@ def readSerialData(SerialConsole):
             if ErrorCounter == 10: 
                 SerialConsole.close()
                 SerialConsole.open()  
-                logging.critical, "Serial Error: Too many Errors ({}). Closing / Opening USB Device " . format(ErrorCounter))
+                logging.critical("Serial Error: Too many Errors ({}). Closing / Opening USB Device " . format(ErrorCounter))
                 rawdata = b''
                 SerialByte = b''
 
@@ -286,7 +286,7 @@ if __name__ == '__main__':
                 # and minimize webservice load
                 joinedRecord = avgData(joinedRecord)
             #    print(joinedRecord)
-                logging.Debug(, "DATA: {}".format(json.dumps(joinedRecord)))
+                logging.Debug("DATA: {}".format(json.dumps(joinedRecord)))
                 sendData2webservice(joinedRecord, emoncsm_node)
                 collectcycle = 0
                 joinedRecord.clear()

@@ -288,7 +288,7 @@ if __name__ == '__main__':
                 # and minimize webservice load
                 joinedRecord = avgData(joinedRecord)
             #    print(joinedRecord)
-                logging.Debug("DATA: {}".format(json.dumps(joinedRecord)))
+                logging.debug("DATA: {}".format(json.dumps(joinedRecord)))
                 sendData2webservice(joinedRecord, emoncsm_node)
                 collectcycle = 0
                 joinedRecord.clear()

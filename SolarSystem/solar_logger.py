@@ -60,7 +60,7 @@ def logger_setup(file_name="logfile", dir='log', minLevel=logging.INFO):
     # Set up logging to the logfile.
     #file_handler = RotatingFileHandler(file_name, maxBytes=max_bytes, backupCount=backup_count)
     file_handler = logging.handlers.TimedRotatingFileHandler("error.txt", when="midnight", backupCount=backup_count)
-    file_handler.setLevel(logging.ERROR)
+    file_handler.setLevel(logging.INFO)
     file_formatter = logging.Formatter(file_msg_format)
     file_handler.setFormatter(file_formatter)
     file_handler.rotator = GZipRotator()

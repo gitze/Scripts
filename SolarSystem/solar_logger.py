@@ -8,7 +8,8 @@ import gzip
 
 # Define the default logging message formats.
 #file_msg_format = '%(asctime)s %(levelname)-8s: %(message)s'
-file_msg_format = '[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s'
+#file_msg_format = '[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s'
+file_msg_format = '%(asctime)s|%(levelname)s|%(name)s.%(funcName)s:%(lineno)d|%(message)s'
 console_msg_format = '%(levelname)s: %(message)s'
 
 # Define the log rotation criteria.

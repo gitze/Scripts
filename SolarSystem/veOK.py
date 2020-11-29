@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Plus que largement inspiré de karioja : https://github.com/karioja/vedirect
+
+# pip3 install pyserial
 
 import os, sys
 import binascii
@@ -11,12 +12,7 @@ import time, datetime
 import signal
 import configparser
 import solar_logger
-try:
-    import serial, serial.tools.list_ports
-except ImportError as e:
-    error = "Please install pyserial 2.7+! pip install pyserial"
-    log.error(error)
-    raise ImportError(error)
+import serial, serial.tools.list_ports
 
 
 # ###########################
@@ -70,13 +66,13 @@ def ve_readinput(SerialCon):
                 try: Byte=SerialCon.readline()
                 except Exception as Error: print("An exception occurred: {}".format(Error))
                 ControlCycles=ControlCycles+1
-                if (ControlCycles > 100): abortProgram("No Victron Serial data received. Device not connected?")
+                if (ControlCycles > 100): abortProgram("No valid Victron Serial data received. Device not connected?")
                 #print (ControlCycles)
                 #print ("Control {} {} {} {}:".format(Byte, Byte[:8], len(Byte), ""))
                 if (Bytes == b'\r\n'): Bytes = b'' # Remove '\r\n' as first bytes in the result
-                if Byte[:8] == b'Checksum' : Byte = Byte[:10] # Remove '\r\n' as last bytes in the result
+                if (Byte[:8] == b'Checksum') : Byte = Byte[:10] # Remove '\r\n' as last bytes in the result
                 Bytes = Bytes + Byte
-                if Byte[:8] == b'Checksum' : 
+                if (Byte[:8] == b'Checksum') : 
                         ByteChecksum = checksum256(Bytes + b'\r\n')  # Add '\r\n' to the correct checksum calsulation
                         if (ByteChecksum > 0): 
                                 logit("ERROR|Checksum wring|{}|{}".format(ByteChecksum,Bytes))

@@ -95,7 +95,8 @@ def parse_value(inputstr, start, len, *args, **kwargs):
 
 def calc_numbers(inputstr, start, len, factor=1, offset=0, signed=False):
     SignFactor = 1
-    if signed: Sign = inputstr[start-1:start]
+    if signed: 
+        Sign = inputstr[start-1:start]
         if Sign == b"-": SignFactor = -1
         else:
             if Sign == b"X": SignFactor = 0
@@ -185,10 +186,10 @@ def readSerialData(SerialConsole):
                     ErrorCounter += 1
                     if NewRecord < 2:
                         time.sleep(0.5)
-            else
+            else:
                 ErrorCounter += 1
-                errortext = "too short" if (len(rawdata) < 58) and (ErrorCounter > 1): else errortext = "too long"
-                    logging.warning("INPUT {:10}[NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(errortext, NewRecord, ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
+                errortext = "too short" if ((len(rawdata) < 58) and (ErrorCounter > 1)) else errortext = "too long"
+                logging.warning("INPUT {:10}[NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(errortext, NewRecord, ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
                 if len(rawdata) > 1000: 
                     SerialConsole.close()
                     SerialConsole.open()  

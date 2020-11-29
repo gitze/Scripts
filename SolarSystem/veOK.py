@@ -66,7 +66,7 @@ def ve_readinput(SerialCon):
                 try: Byte=SerialCon.readline()
                 except Exception as Error: print("An exception occurred: {}".format(Error))
                 ControlCycles=ControlCycles+1
-                if (ControlCycles > 100): abortProgram("No valid Victron Serial data received. Device not connected?")
+                if (ControlCycles > 100): return 99 # abortProgram("No valid Victron Serial data received. Device not connected?")
                 #print (ControlCycles)
                 #print ("Control {} {} {} {}:".format(Byte, Byte[:8], len(Byte), ""))
                 if (Bytes == b'\r\n'): Bytes = b'' # Remove '\r\n' as first bytes in the result
@@ -82,7 +82,9 @@ def ve_readinput(SerialCon):
                                 InputDict.pop(b'Checksum', None)  # Remove Checksum, but wiothout `KeyError`
                                 InputDict = { keyy.decode('utf-8'): InputDict.get(keyy).decode('utf-8') for keyy in InputDict.keys() } 
                                 return InputDict
-                        except Exception as Error: print("An exception occurred: {}".format(Error))
+                        except Exception as Error: 
+                            print("An exception occurred: {}".format(Error))
+                            return 10
                         Bytes = b''
                 # else:
                 #         print ("ELSE")                        
@@ -192,5 +194,6 @@ if __name__ == '__main__':
             time.sleep(max([5 - (TimerEnd - TimerStart), 0]))
         else: 
             logit("ERROR|veDateRead|{}".format(ve_data))
+            if (ve_data = 99): abortProgram("No valid Victron Serial data received. Device not connected?")
 
     #sys.stdout.flush()

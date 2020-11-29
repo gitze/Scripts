@@ -29,8 +29,6 @@ emoncsm_apikey = config.get('DEFAULT',     'emoncsm_apikey', fallback = emoncsm_
 emoncsm_url    = config.get('DEFAULT',     'emoncsm_url',    fallback = emoncsm_url)
 emoncsm_node   = config.get('123SmartBMS', 'emoncsm_node',   fallback = emoncsm_node)
 
-
-
 extendetChecks = True
 USBDeviceName="123SmartBMS Controller"
 ShowDebug = False
@@ -61,7 +59,6 @@ def isCheckSumOK(rawdata):
 
     if not checkRecordOK:
         logging.warning("INPUT CRC Error: Calc {} Compare {} - Ergebnis: {}".format(checksumCalc, checksumComp, checkRecordOK))
-    #   print ("CHECKSUM: Calc {} Compare {} - Ergebnis: {}".format(checksumCalc, checksumComp, checkRecordOK))    
     elif extendetChecks == True:
         # check: postion1  = 00, da Battery Voltage < 128
         # check: postion26 = 4, da 4 Battery verbaut
@@ -98,25 +95,20 @@ def parse_value(inputstr, start, len, *args, **kwargs):
 
 def calc_numbers(inputstr, start, len, factor=1, offset=0, signed=False):
     SignFactor = 1
-    if signed:
-        Sign = inputstr[start-1:start]
-        if Sign == b"-":
-            SignFactor = -1
+    if signed: Sign = inputstr[start-1:start]
+        if Sign == b"-": SignFactor = -1
         else:
-            if Sign == b"X":
-                SignFactor = 0
+            if Sign == b"X": SignFactor = 0
     TextStart = start-1+signed
     TextEnd = start-1+len
-    # print ("{} {} {} {} {}".format(TextStart,TextEnd, factor, offset, signed))
     return round(int(binascii.hexlify(inputstr[TextStart:TextEnd]), 16)*factor-offset, 3)*SignFactor
 
 
 
 def avgData(dictData):
     for key in dictData:
-        if isinstance(dictData[key], list):
+        if isinstance(dictData[key], list): 
             dictData[key] = round( sum(dictData[key]) / len(dictData[key]), 3)
-#    print (dictData)
     return dictData
 
 
@@ -177,9 +169,7 @@ def readSerialData(SerialConsole):
     while True:
         SerialByte = SerialConsole.read()
         #print(binascii.hexlify(SerialByte), end = '')
-        if (SerialByte == b''):
-            NewRecord += 1
-
+        if (SerialByte == b''): NewRecord += 1
         if (SerialByte == b''  and rawdata != b'') or (len(rawdata) == 58) or (len(rawdata) >= 1000):
 #            logging.debug("Value as HEX [{:2d}, {:2d}]: {}".format(ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
 #            print(rawdata[0])
@@ -195,26 +185,17 @@ def readSerialData(SerialConsole):
                     ErrorCounter += 1
                     if NewRecord < 2:
                         time.sleep(0.5)
-            elif (len(rawdata) < 58):
-                if ErrorCounter > 0:
-                    logging.warning("INPUT too short[NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(NewRecord, ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
-                rawdata = b''
+            else
                 ErrorCounter += 1
-            elif len(rawdata) > 1000: 
-                SerialConsole.close()
-                SerialConsole.open()  
-                logging.warning( "Serial Error: Starting Point not found after {} Bytes. Closing / Opening USB Device " . format(len(rawdata)))
+                errortext = "too short" if (len(rawdata) < 58) and (ErrorCounter > 1): else errortext = "too long"
+                    logging.warning("INPUT {:10}[NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(errortext, NewRecord, ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
+                if len(rawdata) > 1000: 
+                    SerialConsole.close()
+                    SerialConsole.open()  
                 rawdata = b''
                 SerialByte = b''
-                ErrorCounter += 1                
-            elif len(rawdata) > 58: 
-                logging.warning("INPUT too long [NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(NewRecord, ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
-                rawdata = b''
-                ErrorCounter += 1
-            else:
-                logging.critical("Error Unexpected ELSE Statement in readSerialData()")
 
-            NewRecord=0
+            NewRecord = 0
 
             if ErrorCounter == 10: 
                 SerialConsole.close()

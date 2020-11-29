@@ -55,14 +55,16 @@ def abortProgram(errortext):
         print (errortext)
         sys.exit(1)
 
-def ve_readinput():
+def ve_readinput(serCon):
         Bytes = b''
         Byte  = b''
         ControlCycles = 0
         while True:
-                try: Byte=ser.readline()
+                try: Byte=serCon.readline()
                 except Exception as Error: print("An exception occurred: {}".format(Error))
                 ControlCycles=ControlCycles+1
+                print(byte)
+                
                 if (ControlCycles > 50): abortProgram("No Victron Serial data received. Device not connected?")
                 if (Byte == b'\r\n') :
 #                        print (Bytes)
@@ -176,7 +178,7 @@ if __name__ == '__main__':
 
     while True:
         TimerStart = int(time.time())
-        ve_data = ve_readinput()
+        ve_data = ve_readinput(ser)
         if isinstance(ve_data, dict): 
             # print (ve_data)
             ve_data = cleanupData(ve_data)

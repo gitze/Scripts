@@ -11,7 +11,8 @@ import time, datetime
 import configparser
 import solar_logger
 try:
-    import serial, serial.tools.list_ports
+    import serial
+    import serial.tools.list_ports
 except ImportError as e:
     error = "Please install pyserial 2.7+! pip install pyserial"
     log.error(error)
@@ -46,44 +47,71 @@ def findSerialDevices(SearchPhrase="search phrase"):
     return USBPortId
 
 
-def checksum256(the_bytes):
-    return (sum(the_bytes) % 256)
+class vedirect:
+    def __init__(self, serialport):
+        self.serialport = serialport
+        self.ser = serial.Serial(serialport, baudrate = 19200, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)
+        self.header1 = b'\r'
+        self.header2 = b'\n'
+        self.delimiter = b'\t'
+        self.key = b''
+        self.value = b''
+        self.bytes_sum = 0
+        self.state = self.WAIT_HEADER
+        self.dict = {}
 
+    (WAIT_HEADER, IN_KEY, IN_VALUE, IN_CHECKSUM) = range(4)
 
-def abortProgram(errortext):
-        print ("ABORT PROGRAM")
-        print (errortext)
-        sys.exit(1)
+    def input(self, byte):
+        self.bytes_sum += ord(byte)
+        if self.state == self.WAIT_HEADER:
+            if byte == self.header2:
+                self.state = self.IN_KEY
+                self.key = b''
+            return None
+        elif self.state == self.IN_KEY:
+            if byte == self.delimiter:
+                self.state = self.IN_CHECKSUM if self.key == b'Checksum' else self.IN_VALUE
+            else:
+                self.key += byte
+            return None
+        elif self.state == self.IN_VALUE:
+            if byte == self.header1:
+                self.state = self.WAIT_HEADER
+                #  print (self.key + ":" + self.value)
+                self.dict[self.key.decode("utf-8") ] = self.value.decode("utf-8") 
+                self.key = b''
+                self.value = b''
+            else:
+                self.value += byte
+            return None
+        elif self.state == self.IN_CHECKSUM:
+            self.key = b''
+            self.value = b''
+            self.state = self.WAIT_HEADER
+            if (self.bytes_sum % 256 == 0):
+                self.bytes_sum = 0
+                return self.dict
+            else:
+                print ("Checksum ERROR: ",self.dict)
+#                print (self.dict)
+                self.dict.clear()
+                self.bytes_sum = 0
+                return None
+        else:
+            raise AssertionError()
 
-def ve_readinput(serCon):
-        Bytes = b''
-        Byte  = b''
-        ControlCycles = 0
+    def read_data_single(self):
         while True:
-                try: Byte=serCon.readline()
-                except Exception as Error: print("An exception occurred: {}".format(Error))
-                ControlCycles=ControlCycles+1
-                print(Byte)
-                print(ControlCycles)
+            byte = self.ser.read(1)
+            packet = self.input(byte)
+            # print ("{} {}".format(self.key,self.value))
+            if (packet != None):
+                return packet
 
-                if (ControlCycles > 50): abortProgram("No Victron Serial data received. Device not connected?")
-                if (Byte == b'\r\n') :
-#                        print (Bytes)
-                        ByteChecksum = checksum256(Bytes + b'\r\n')  # Add '\r\n' to the correct checksum calsulation
-                        if (ByteChecksum > 0): return None
- #                       print ("Checksum256: {}".format(ByteChecksum))
-                        try:
-                                InputDict = dict(xx.split(b'\t') for xx in Bytes.split(b'\r\n'))
-                                InputDict.pop(b'Checksum', None)  # Remove Checksum, but wiothout `KeyError`
-                                InputDict = { keyy.decode('utf-8'): InputDict.get(keyy).decode('utf-8') for keyy in InputDict.keys() } 
-                                return InputDict
-                        except Exception as Error: print("An exception occurred: {}".format(Error))
-                        Bytes = b''
-                else:
-                        Bytes = Bytes + Byte
-                        if (Bytes == b'\r\n'): Bytes = b'' # Remove '\r\n' as first byte in the result
-        return None
-
+    def reset_input_buffer(self):
+        self.ser.reset_input_buffer()
+        
 
 def openSerial(DevicePort, BaudRate, TimeOut):
     SerialCon = serial.Serial(
@@ -125,13 +153,16 @@ def sendData2webservice(data123):
 
 def cleanupData(dicData):
     entriesToRemove = ('PID', 'SER#', 'FW','HSDS')
-    for key in entriesToRemove: dicData.pop(key, None)
-
+    for key in entriesToRemove:
+        dicData.pop(key, None)
+    
     dicData.update(LOAD = 1) if dicData.get("LOAD") == "ON" else dicData.update(LOAD = 0)
-
+    
+    #print (dicData)
     entriesToRecalc = {'V': 0.001, 'VPV': 0.001, 'I': 0.001, 'IL': 0.001, 'H19': 10, 'H20': 10, 'H22': 10 }
-    for key, val in entriesToRecalc.items(): dicData[key] = round(int(dicData.get(key,0)) * val ,3)
-
+    for key, val in entriesToRecalc.items():
+        dicData[key] = round(int(dicData.get(key,0)) * val ,3)
+    # print (dicData)
     return dicData
 
 
@@ -164,31 +195,22 @@ else:
 # Main
 # ###########################
 if __name__ == '__main__':
-    ser = serial.Serial(
-        port=serialPort,
-        baudrate = 19200,
-        parity=serial.PARITY_NONE,
-        stopbits=serial.STOPBITS_ONE,
-        bytesize=serial.EIGHTBITS,
-        timeout=0.200
-    )
 #    SerialCon = openSerial(serialPort, 19200, 10))
     data123 = dict() 
     checksumFail = 0
     HTTPReturnCode = 0
-
+    ve = vedirect(serialPort)
     while True:
         TimerStart = int(time.time())
-        ve_data = ve_readinput(ser)
-        if isinstance(ve_data, dict): 
-            # print (ve_data)
-            ve_data = cleanupData(ve_data)
-            HTTPReturnCode = sendData2webservice(ve_data)
-            logit(str(TimerStart) + "|"  + emoncsm_node + "|" + str(HTTPReturnCode) + "|" + json.dumps(ve_data))
-            ve_data.clear()
-        else: 
-            logit("ERROR|veDateRead|{}".format(ve_data))
-
+        data123 = ve.read_data_single()
+        data123 = cleanupData(data123)
+        HTTPReturnCode = sendData2webservice(data123)
+        logit(str(TimerStart) + "|"  + emoncsm_node + "|" + str(HTTPReturnCode) + "|" + json.dumps(data123))
+        # fileout.write(myurl)
+        # print (data123)
+        # print (myurl)
+        data123.clear()
+        ve.reset_input_buffer()
         TimerEnd = int(time.time())
 #        print (max([5 - (TimerEnd - TimerStart), 0]))
         time.sleep(max([5 - (TimerEnd - TimerStart), 0]))

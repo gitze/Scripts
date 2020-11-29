@@ -188,7 +188,7 @@ def readSerialData(SerialConsole):
                         time.sleep(0.5)
             else:
                 ErrorCounter += 1
-                errortext = "too short" if ((len(rawdata) < 58) and (ErrorCounter > 1)) else errortext = "too long"
+                errortext = "too short" if ((len(rawdata) < 58) and (ErrorCounter > 1)) else  "too long"
                 logging.warning("INPUT {:10}[NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(errortext, NewRecord, ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
                 if len(rawdata) > 1000: 
                     SerialConsole.close()

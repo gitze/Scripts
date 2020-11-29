@@ -63,8 +63,9 @@ def ve_readinput(serCon):
                 try: Byte=serCon.readline()
                 except Exception as Error: print("An exception occurred: {}".format(Error))
                 ControlCycles=ControlCycles+1
-                print(byte)
-                
+                print(Byte)
+                print(ControlCycles)
+
                 if (ControlCycles > 50): abortProgram("No Victron Serial data received. Device not connected?")
                 if (Byte == b'\r\n') :
 #                        print (Bytes)

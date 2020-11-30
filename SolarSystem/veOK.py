@@ -66,28 +66,29 @@ def ve_readinput(SerialCon):
                 try: Byte=SerialCon.readline()
                 except Exception as Error: print("An exception occurred: {}".format(Error))
                 ControlCycles=ControlCycles+1
-                if (ControlCycles > 100): return 99 # abortProgram("No valid Victron Serial data received. Device not connected?")
-                #print (ControlCycles)
-                #print ("Control {} {} {} {}:".format(Byte, Byte[:8], len(Byte), ""))
+                if (ControlCycles > 100):
+                    logit("ERROR|Serial Connection Issues. No data received within the last {} reading cycles|{}".format(ControlCycles))
+                    return 99 # abortProgram("No valid Victron Serial data received. Device not connected?")
                 if (Bytes == b'\r\n'): Bytes = b'' # Remove '\r\n' as first bytes in the result
                 if (Byte[:8] == b'Checksum') : Byte = Byte[:10] # Remove '\r\n' as last bytes in the result
                 Bytes = Bytes + Byte
                 if (Byte[:8] == b'Checksum') : 
                         ByteChecksum = checksum256(Bytes + b'\r\n')  # Add '\r\n' to the correct checksum calsulation
-                        if (ByteChecksum > 0): 
-                                logit("ERROR|Checksum wring|{}|{}".format(ByteChecksum,Bytes))
-                                return None
+                        if (ByteChecksum > 0):
+                            logit("ERROR|Checksum wrong|{}|{}".format(ByteChecksum,Bytes))
+                            return None # Checksum wrong
                         try:
                                 InputDict = dict(xx.split(b'\t') for xx in Bytes.split(b'\r\n'))
                                 InputDict.pop(b'Checksum', None)  # Remove Checksum, but wiothout `KeyError`
                                 InputDict = { keyy.decode('utf-8'): InputDict.get(keyy).decode('utf-8') for keyy in InputDict.keys() } 
                                 return InputDict
                         except Exception as Error: 
-                            print("An exception occurred: {}".format(Error))
-                            return 10
+                            print("An unexpected exception occurred: {}".format(Error))
+                            return 10 # An Error occured during value processing. This should not happen
                         Bytes = b''
                 # else:
-                #         print ("ELSE")                        
+                #         print ("ELSE")   
+        logit("ERROR|Unexpected point of code ")         
         return None
 
 
@@ -183,7 +184,9 @@ if __name__ == '__main__':
             TimerEnd = int(time.time())
             time.sleep(max([5 - (TimerEnd - TimerStart), 0]))
         else: 
-            logit("ERROR|veDateRead|{}".format(ve_data))
-            if (ve_data == 99): abortProgram("No valid Victron Serial data received. Device not connected?")
+            logit("ERROR|veDateRead Error Code|{}".format(ve_data))
+            # if (ve_data == None): 
+            # if (ve_data == 10):   
+            if (ve_data == 99):   abortProgram("No valid Victron Serial data received. Device not connected?")
 
     #sys.stdout.flush()

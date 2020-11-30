@@ -100,9 +100,8 @@ def openSerial(DevicePort, BaudRate, TimeOut):
     return SerialCon
 
 
-def sendData2webservice(data123):
+def sendData2webservice(TimeStamp, data123):
     data = json.dumps(data123)
-    TimeStamp = int(time.time())
     HTTPStatus=999
     myurl = '{}{}'.format(
         emoncsm_url, 
@@ -170,30 +169,21 @@ else:
 # Main
 # ###########################
 if __name__ == '__main__':
-    SerialCon = serial.Serial(
-        port=serialPort,
-        baudrate = 19200,
-        parity=serial.PARITY_NONE,
-        stopbits=serial.STOPBITS_ONE,
-        bytesize=serial.EIGHTBITS,
-        timeout=0.200
-    )
-    checksumFail = 0
-    HTTPReturnCode = 0
-
+    SerialCon = openSerial(serialPort, 19200, 0.200)
     while True:
         TimerStart = int(time.time())
         ve_data = ve_readinput(SerialCon)
         if isinstance(ve_data, dict): 
             #print (ve_data)
             ve_data = cleanupData(ve_data)
+            TimeStamp = int(time.time())
             #print (ve_data)
-            HTTPReturnCode = sendData2webservice(ve_data)
+            HTTPReturnCode = sendData2webservice(TimeStamp, ve_data)
             logit(str(TimerStart) + "|"  + emoncsm_node + "|" + str(HTTPReturnCode) + "|" + json.dumps(ve_data))
             TimerEnd = int(time.time())
             time.sleep(max([5 - (TimerEnd - TimerStart), 0]))
         else: 
             logit("ERROR|veDateRead|{}".format(ve_data))
-            if (ve_data = 99): abortProgram("No valid Victron Serial data received. Device not connected?")
+            if (ve_data == 99): abortProgram("No valid Victron Serial data received. Device not connected?")
 
     #sys.stdout.flush()

@@ -38,6 +38,7 @@ s.click.aliexpress.com
 @@||json.bild.de^$important
 @@||code.bildstatic.de^$important
 @@||tagger.opecloud.com^$important
+
 @@||diskstation^$important
 @@||impression.appsflyer.com^$important
 @@||isnssdk.com^$important
@@ -47,3 +48,9 @@ s.click.aliexpress.com
 @@||assets.alicdn.com^$important
 @@||fs.ypncdn.com^$important
 @@||local^$important
+@@||image.nl.coop-city.ch^$important
+@@||hassio^$important
+@@||swcdn.apple.com^$important
+@@||swcdn.g.aaplimg.com^$important
+@@||marketing.vistaprint.com^$important
+@@||offer.alibaba.com^$important

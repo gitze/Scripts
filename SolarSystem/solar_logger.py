@@ -14,10 +14,8 @@ console_msg_format = '%(levelname)s: %(message)s'
 
 # Define the log rotation criteria.
 #max_bytes=1024**2
-max_bytes=2000
+#max_bytes=2000
 backup_count=10
-
-
 
 class GZipRotator:
     def __call__(self, source, dest):
@@ -57,6 +55,7 @@ def logger_setup(file_name="logfile", dir='log', minLevel=logging.INFO):
 
     # Construct the name of the logfile.
     file_name = os.path.join(dir, file_name)
+    file_name_error = os.path.join(dir, "error.txt")
 
     # Set up logging to the logfile.
     #file_handler = RotatingFileHandler(file_name, maxBytes=max_bytes, backupCount=backup_count)
@@ -69,7 +68,7 @@ def logger_setup(file_name="logfile", dir='log', minLevel=logging.INFO):
 
     # Set up logging to the logfile.
     #file_handler = RotatingFileHandler(file_name, maxBytes=max_bytes, backupCount=backup_count)
-    file_handlerError = logging.handlers.TimedRotatingFileHandler("error.txt", when="midnight", backupCount=backup_count)
+    file_handlerError = logging.handlers.TimedRotatingFileHandler(file_name_error, when="midnight", backupCount=backup_count)
     file_handlerError.setLevel(logging.WARNING)
     file_formatterError = logging.Formatter(file_msg_format)
     file_handlerError.setFormatter(file_formatterError)

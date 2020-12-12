@@ -28,19 +28,23 @@ emoncsm_apikey = config.get('DEFAULT', 'emoncsm_apikey', fallback = emoncsm_apik
 emoncsm_url    = config.get('DEFAULT', 'emoncsm_url',    fallback = emoncsm_url)
 emoncsm_node   = config.get('Victron', 'emoncsm_node',   fallback = emoncsm_node)
 
-USBDeviceName="VE Direct cable"
+USBDeviceName = ["Victron", "VE Direct cable"]
 ShowDebug = False
 
 # ###########################
 # Functions
 # ###########################
-def findSerialDevices(SearchPhrase="search phrase"):
-    SearchPhrase = "(?i)" + SearchPhrase  # forces case insensitive
-    USBPortId="NOT FOUND"
-    for port in serial.tools.list_ports.grep(SearchPhrase):
-        USBPortId = port[0]
-    return USBPortId
-
+def findSerialDevices(SearchPhraseArray=["VE Direct cable"]):
+    SearchTerms = len(SearchPhraseArray)
+    for SearchPhrase in SearchPhraseArray:
+#        print(SearchPhrase)
+        SearchPhrase = "(?i)" + SearchPhrase  # forces case insensitive
+#        lines = len(list(serial.tools.list_ports.grep(SearchPhrase)))
+#        print (lines)
+        for port in serial.tools.list_ports.grep(SearchPhrase):
+            USBPortId = port[0]
+            return USBPortId
+    return None
 
 def checksum256(the_bytes):
     return (sum(the_bytes) % 256)
@@ -155,7 +159,7 @@ def logit(logvalue):
 if len(sys.argv) < 2:
     print("Autodetecting USB Port for '{}'".format(USBDeviceName))
     serialPort = findSerialDevices(USBDeviceName)
-    if (serialPort == "NOT FOUND"):
+    if (serialPort == None):
         print ("Device {} not found".format(USBDeviceName))
         sys.exit(1)
     else:

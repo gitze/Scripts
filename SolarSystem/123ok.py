@@ -30,7 +30,8 @@ emoncsm_url    = config.get('DEFAULT',     'emoncsm_url',    fallback = emoncsm_
 emoncsm_node   = config.get('123SmartBMS', 'emoncsm_node',   fallback = emoncsm_node)
 
 extendetChecks = True
-USBDeviceName="123SmartBMS Controller"
+USBDeviceName = ["123SmartBMS Controller"]
+
 ShowDebug = False
 # ###########################
 
@@ -39,13 +40,18 @@ ShowDebug = False
 # ###########################
 # Functions
 # ###########################
+def findSerialDevices(SearchPhraseArray=["VE Direct cable"]):
+    SearchTerms = len(SearchPhraseArray)
+    for SearchPhrase in SearchPhraseArray:
+#        print(SearchPhrase)
+        SearchPhrase = "(?i)" + SearchPhrase  # forces case insensitive
+#        lines = len(list(serial.tools.list_ports.grep(SearchPhrase)))
+#        print (lines)
+        for port in serial.tools.list_ports.grep(SearchPhrase):
+            USBPortId = port[0]
+            return USBPortId
+    return None
 
-def findSerialDevices(SearchPhrase="search phrase"):
-    SearchPhrase = "(?i)" + SearchPhrase  # forces case insensitive
-    USBPortId="NOT FOUND"
-    for port in serial.tools.list_ports.grep(SearchPhrase):
-        USBPortId = port[0]
-    return USBPortId
 
 # returns total mod 256 as checksum
 # http://code.activestate.com/recipes/52251-simple-string-checksum/
@@ -226,7 +232,7 @@ def openSerial(DevicePort):
 if len(sys.argv) < 2:
     print("Autodetecting USB Port for '{}'".format(USBDeviceName))
     serialPort = findSerialDevices(USBDeviceName)
-    if (serialPort == "NOT FOUND"):
+    if (serialPort == None):
         print ("Device {} not found".format(USBDeviceName))
         sys.exit(1)
     else:

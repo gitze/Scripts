@@ -28,7 +28,7 @@ emoncsm_apikey = config.get('DEFAULT', 'emoncsm_apikey', fallback = emoncsm_apik
 emoncsm_url    = config.get('DEFAULT', 'emoncsm_url',    fallback = emoncsm_url)
 emoncsm_node   = config.get('Victron', 'emoncsm_node',   fallback = emoncsm_node)
 
-USBDeviceName="VVictronEnergy"
+USBDeviceName="VictronEnergy"
 ShowDebug = False
 
 # ###########################

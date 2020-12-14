@@ -32,9 +32,16 @@
 #                    the SDCARD to the image. So restore is working on 
 #                    recent raspian versions.
 #
+# 2020-12-13 gitze: 
+#               add: added rsync oprions -AX
 #
 #
-# RESTORE:
+#
+# Original SOURCE:
+# GIThub: https://github.com/lzkelley/bkup_rpimage
+#
+#
+## RESTORE:
 # dd bs=4M if=/mnt/usb/raspi_IMAGE.img of=/dev/sde conv=fsync status=progress
 #
 # https://pimylifeup.com/raspberry-pi-exfat/
@@ -52,7 +59,7 @@
 #
 
 
-VERSION=v1.2
+VERSION=v1.2.1
 SDCARD=/dev/mmcblk0
 
 setup () {

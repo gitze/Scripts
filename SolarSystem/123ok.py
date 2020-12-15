@@ -163,7 +163,7 @@ def sendData2webservice(data123, node_name):
         r = requests.get(myurl)
         #print (r)
     except requests.exceptions.RequestException as e:  # This is the correct syntax
-        logging.Error("Webservice Fehler URL:{} ERROR:{}".format(e, myurl))
+        logging.error("Webservice Fehler URL:{} ERROR:{}".format(e, myurl))
         time.sleep(5)
     return
 

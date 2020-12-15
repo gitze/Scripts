@@ -27,7 +27,7 @@ class GZipRotator:
         f_in.close()
         os.remove(dest)
 
-def logger_setup(file_name="logfile", dir='log', minLevel=logging.INFO):
+def logger_setup(file_name="logfile", dir='log', minLevel=logging.WARNING):
     """ Set up dual logging to console and to logfile.
     When this function is called, it first creates the given logging output directory. 
     It then creates a logfile and passes all log messages to come to it. 

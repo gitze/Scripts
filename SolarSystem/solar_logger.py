@@ -78,7 +78,8 @@ def logger_setup(file_name="logfile", dir='log', minLevel=logging.WARNING):
 
     # Set up logging to the console.
     stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(minLevel)
+    #stream_handler.setLevel(minLevel)
+    stream_handler.setLevel(logging.WARNING)
     stream_formatter = logging.Formatter(console_msg_format)
     stream_handler.setFormatter(stream_formatter)
     logger.addHandler(stream_handler)

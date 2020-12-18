@@ -2,3 +2,4 @@
 .DS_Store
 SolarSystem/emoncms.conf
 venv/
+SolarSystem/rasp_install.txt

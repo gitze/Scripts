@@ -41,22 +41,25 @@
 # GIThub: https://github.com/lzkelley/bkup_rpimage
 #
 #
-## RESTORE:
+# RESTORE:
 # dd bs=4M if=/mnt/usb/raspi_IMAGE.img of=/dev/sde conv=fsync status=progress
-#
 # https://pimylifeup.com/raspberry-pi-exfat/
-#
 #
 # sudo apt install smbclient
 # sudo apt-get install exfat-fuse
 # sudo apt-get install exfat-utils
+#
 # mount -t cifs -o username=XXXXX,password=XXXXX //diskstation/backup /media/samba
 #
 # sudo blkid
 # sudo nano /etc/fstab
 # UUID=5FD6-2788 /media/exfat exfat defaults,auto,umask=000,users,rw 0 0
+# UUID=5FDA-3F0A /media/exfat exfat defaults,auto,umask=000,users,rw 0 0
 # sudo mount -t exfat /dev/sdb1 /media/exfat
 #
+# sudo apt-get install usbmount
+
+
 
 
 VERSION=v1.2.1

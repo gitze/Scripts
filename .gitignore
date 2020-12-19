@@ -3,3 +3,6 @@
 SolarSystem/emoncms.conf
 venv/
 SolarSystem/rasp_install.txt
+SolarSystem/deploy_123.sh
+SolarSystem/deploy_ve.sh
+SolarSystem/backup_system.sh

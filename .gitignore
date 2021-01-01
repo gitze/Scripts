@@ -7,3 +7,4 @@ SolarSystem/deploy_123.sh
 SolarSystem/deploy_ve.sh
 SolarSystem/backup_system.sh
 *.conf
+RaspiBackup/backup_system.sh

@@ -18,7 +18,7 @@ echo "#    File:        $FILENAME"
 echo "################################################################################"
 if [ ! -e "$CONTROLFILE" ]; then
     echo "BACKUP Location not found." >&2
-    echo "Looking for folowing file: $CONTROLFILE" >&2
+    echo "Looking for following control file: $CONTROLFILE" >&2
     exit 1
 else 
     /opt/raspibackup/bkup_rpimage.sh start -c -s $FILESIZE "$FILENAME"

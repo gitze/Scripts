@@ -2,13 +2,13 @@
 # backup_raspifull.sh
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-BACKUPDIR=/automnt/backup
+BACKUPDIR=/automnt/diskstation
 BACKUPNAME=gartenrpi
+FILESIZE="4000"
+CONTROLFILE=${BACKUPDIR}/BACKUP_DRIVE
 
 NOW=$(date +"%Y-%m-%d %H:%M:%S")
-CONTROLFILE=${BACKUPDIR}/BACKUP_USB
 WEEKDAY=`date +%u`
-FILESIZE="4000"
 FILENAME="${BACKUPDIR}/${BACKUPNAME}_"$FILESIZE"_backup_"$WEEKDAY".img"
 
 echo "################################################################################"

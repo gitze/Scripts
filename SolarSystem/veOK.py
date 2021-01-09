@@ -70,7 +70,7 @@ def ve_readinput(SerialCon):
                 except Exception as Error: print("An exception occurred: {}".format(Error))
                 ControlCycles=ControlCycles+1
                 if (ControlCycles > 100):
-                    logit("ERROR|Serial Connection Issues. No data received within the last {} reading cycles|{}".format(ControlCycles))
+                    logit("ERROR|Serial Connection Issues. No data received within the last {} reading cycles|{}".format(ControlCycles, ControlCycles))
                     return 99 # abortProgram("No valid Victron Serial data received. Device not connected?")
                 if (Bytes == b'\r\n'): Bytes = b'' # Remove '\r\n' as first bytes in the result
                 if (Byte[:8] == b'Checksum') : Byte = Byte[:10] # Remove '\r\n' as last bytes in the result

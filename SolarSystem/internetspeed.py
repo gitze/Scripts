@@ -64,22 +64,23 @@ if __name__ == '__main__':
     joinedRecord = dict()
  
     try:
-        response = subprocess.run(['/usr/bin/speedtest-cli', '--csv'], capture_output=True, encoding='utf-8')
-
+        response = subprocess.run(['/usr/bin/speedtest-cli', '--json'], capture_output=True, encoding='utf-8')
         # if speedtest-cli exited with no errors / ran successfully
         if response.returncode == 0:
             # from the csv man page
             # "And while the module doesn’t directly support parsing strings, it can easily be done"
             # this will remove quotes and spaces vs doing a string split on ','
             # csv.reader returns an iterator, so we turn that into a list
-            cols = list(csv.reader([response.stdout]))[0]
+            # cols = list(csv.reader([response.stdout]))[0]
+            speed = json.loads(response.stdout)
+
             print (response.stdout)
             # turns 13.45 ping to 13
-            ping = int(float((cols[5])))
+            ping = int(float((speed["ping"])))
 
             # speedtest-cli --csv returns speed in bits/s, convert to bytes
-            download = formatnumber(cols[6],1024*1024)
-            upload = formatnumber(cols[7],1024*1024)
+            download = formatnumber(speed["download"],1024*1024)
+            upload = formatnumber(speed["upload"],1024*1024)
             joinedRecord.setdefault("Ping", ping)
             joinedRecord.setdefault("Download", download)
             joinedRecord.setdefault("Upload", upload)

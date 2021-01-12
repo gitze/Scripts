@@ -118,6 +118,12 @@ def avgData(dictData):
             dictData[key] = round( sum(dictData[key]) / len(dictData[key]), 3)
     return dictData
 
+def isKthBitSet(number, searchBit, testValue=1):
+    new_num = number >> (searchBit) #K: 0 .. 7
+    # new_num = n >> (k - 1)  : K = 1 .. 8
+    #if it results to '1' then bit is set, 
+    #else it results to '0' bit is unset 
+    return (new_num & testValue) 
 
 def decodeAndAppendData(rawdata, dicData):
     dicData.setdefault("TotalVoltage", parse_value(rawdata, 1, 3, factor=0.005))
@@ -150,6 +156,16 @@ def decodeAndAppendData(rawdata, dicData):
     dicData.setdefault("V-MAX Setting", parse_value(rawdata, 54, 2, factor=0.005))
     dicData.setdefault("V-Bypass Setting", parse_value(rawdata, 56, 2, factor=0.005))
     dicData.setdefault("Status", parse_value(rawdata, 31, 1))
+   
+    dicData.setdefault("Status Charge", isKthBitSet(dicData.get("Status"),0))
+    dicData.setdefault("Status Discharge", isKthBitSet(dicData.get("Status"),1))
+    dicData.setdefault("Communication Error", isKthBitSet(dicData.get("Status"),2))
+    dicData.setdefault("Status Voltage MIN", isKthBitSet(dicData.get("Status"),3))
+    dicData.setdefault("Status Voltage MAX", isKthBitSet(dicData.get("Status"),4))
+    dicData.setdefault("Status Temp MIN", isKthBitSet(dicData.get("Status"),5))
+    dicData.setdefault("Status Temp MAX", isKthBitSet(dicData.get("Status"),6))
+    dicData.setdefault("SOC not calibrated", isKthBitSet(dicData.get("Status"),7))
+
     return dicData
 
 def sendData2webservice(data123, node_name):

@@ -7,17 +7,12 @@ import serial.tools.list_ports
 import sys
 import binascii
 import json
-import requests
-from urllib.parse import urlencode, quote_plus
 import time
 import datetime
 import configparser
 import logging.handlers
 import solar_logger
 import solar_threadhandler
-import threading
-
-from pympler import asizeof
 
 
 # ###########################
@@ -42,6 +37,9 @@ ShowDebug = False
 
 # ###########################
 # Functions
+# ###########################
+
+
 # ###########################
 
 
@@ -325,11 +323,8 @@ if __name__ == '__main__':
     singleRecord = b""
     collectcycle = 0
     fileout = open("/home/pi/123smartbms.log", "a")
-    DataLoggerQueueProcessing = 2
-    QueueMgmt = threading.Thread(
-        name="Queue", target=backgroudDataQueue, daemon=True)
-    QueueMgmt.start()
-
+    EmonCMS = solar_threadhandler.DataLoggerQueue(emoncsm_url, emoncsm_apikey)
+    EmonCMS.StartQueue()
     try:
         while True:
             singleRecord = readSerialData(SerialCon)
@@ -348,7 +343,7 @@ if __name__ == '__main__':
                 joinedRecord = avgData(joinedRecord)
                 # print(joinedRecord)
                 logging.info("DATA: {}".format(json.dumps(joinedRecord)))
-                addDataQueue(joinedRecord, emoncsm_node)
+                EmonCMS.addDataQueue(joinedRecord, emoncsm_node)
                 # sendDataQueue()
 #                sendData2webservice(joinedRecord, emoncsm_node)
                 collectcycle = 0
@@ -357,9 +352,8 @@ if __name__ == '__main__':
             # time.sleep(0.5)
     except KeyboardInterrupt:
         # Programm wird beendet wenn CTRL+C gedrückt wird.
-        DataLoggerQueueProcessing = 1
         print('Warte auf Ende von DataLoggerQueueProcessing')
-        QueueMgmt.join()
+        EmonCMS.FlushQueue()
         print('Datensammlung wird beendet')
     except Exception as e:
         print(str(e))

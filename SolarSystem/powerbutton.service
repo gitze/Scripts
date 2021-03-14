@@ -1,0 +1,23 @@
+[Unit]
+Description=Solar Power Mahagement 
+After=syslog.target network.target
+
+[Service]
+#Type=simple
+#User=pi
+#Group=pio
+WorkingDirectory=/opt/solar
+ExecStart=/usr/bin/python3 /opt/solar/powerbutton.py 
+SyslogIdentifier=SolarPowerButton
+StandardOutput=syslog
+StandardError=syslog
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
+
+#sudo cp powerbutton.service /etc/systemd/system/powerbutton.service
+#sudo systemctl start powerbutton.service
+#sudo systemctl stop powerbutton.service
+#sudo systemctl enable powerbutton.service

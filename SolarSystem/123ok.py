@@ -60,12 +60,12 @@ def addDataQueue(inputdata, node_name):
     DataLoggerQueue.append(QueueItem)
     QueueSize = asizeof.asizeof(DataLoggerQueue)
     QueueLength = len(DataLoggerQueue)
-    print(f"Add Queue Length: {QueueLength} ({QueueSize} bytes)")
+#    print(f"Add Queue Length: {QueueLength} ({QueueSize} bytes)")
     if (QueueSize > DataLoggerQueueMaxSize):
         del DataLoggerQueue[:(round(QueueLength*DataLoggerQueueReduction))]
         QueueSize = asizeof.asizeof(DataLoggerQueue)
         QueueLength = len(DataLoggerQueue)
-        print(f"New Queue Length: {QueueLength} ({QueueSize} bytes)")
+        logging.warning((f"New Queue Length: {QueueLength} ({QueueSize} bytes)")
 
 
 def sendDataQueue():
@@ -73,34 +73,34 @@ def sendDataQueue():
     global DataLoggerQueueProcessing
     global DataLoggerTestRun
 
-    currentItem = []
+    currentItem=[]
 
-    if (DataLoggerTestRun == 0):
-        if (len(DataLoggerQueue) < 5):
-            DataLoggerTestRun = 1
-    if (DataLoggerQueueProcessing < 2):
-        DataLoggerTestRun = 0
-    if (DataLoggerTestRun == 1):
-        if (len(DataLoggerQueue) < 20):
-            return
-        else:
-            DataLoggerTestRun = 0
+    # if (DataLoggerTestRun == 0):
+    #     if (len(DataLoggerQueue) < 5):
+    #         DataLoggerTestRun = 1
+    # if (DataLoggerQueueProcessing < 2):
+    #     DataLoggerTestRun = 0
+    # if (DataLoggerTestRun == 1):
+    #     if (len(DataLoggerQueue) < 20):
+    #         return
+    #     else:
+    #         DataLoggerTestRun = 0
 
-    currentItem = DataLoggerQueue.pop()
+    currentItem=DataLoggerQueue.pop()
     # print(f"POP Queue Length: {len(DataLoggerQueue)}")
-    inputdata = currentItem[0]
-    inputtime = currentItem[1]
-    inputnode = currentItem[2]
+    inputdata=currentItem[0]
+    inputtime=currentItem[1]
+    inputnode=currentItem[2]
 
-    myurl = '{}{}'.format(
+    myurl='{}{}'.format(
         emoncsm_url,
         urlencode({'node': inputnode, 'apikey': emoncsm_apikey,
                    'time': inputtime, 'fulljson': inputdata})
     )
     # print(myurl)
     try:
-        r = requests.get(myurl)
-        print(f"Rerquest Response: {r.status_code} {r.text}")
+        r=requests.get(myurl)
+#        print(f"Rerquest Response: {r.status_code} {r.text}")
         r.raise_for_status()
     except requests.exceptions.RequestException as e:  # This is the correct syntax
         logging.error(f"Webservice Fehler URL:{myurl} ERROR:{e}")
@@ -117,7 +117,7 @@ def backgroudDataQueue():
         if (len(DataLoggerQueue) > 0):
             sendDataQueue()
             if(DataLoggerQueueProcessing == 1):
-                print(
+                logging.warning(
                     f"EXIT Queue - Length: {len(DataLoggerQueue)} ({str(sys.getsizeof(DataLoggerQueue))} bytes) {asizeof.asizeof(DataLoggerQueue)}")
         elif(DataLoggerQueueProcessing == 1):
             return
@@ -130,21 +130,21 @@ def backgroudDataQueue():
 # Functions
 # ###########################
 def findSerialDevices(SearchPhraseArray=["VE Direct cable"]):
-    SearchTerms = len(SearchPhraseArray)
+    SearchTerms=len(SearchPhraseArray)
     for SearchPhrase in SearchPhraseArray:
         #        print(SearchPhrase)
-        SearchPhrase = "(?i)" + SearchPhrase  # forces case insensitive
+        SearchPhrase="(?i)" + SearchPhrase  # forces case insensitive
 #        lines = len(list(serial.tools.list_ports.grep(SearchPhrase)))
 #        print (lines)
         for port in serial.tools.list_ports.grep(SearchPhrase):
-            USBPortId = port[0]
+            USBPortId=port[0]
             return USBPortId
     return None
 
 
 def jprint(obj):
     # create a formatted string of the Python JSON object
-    text = json.dumps(obj, sort_keys=True, indent=4)
+    text=json.dumps(obj, sort_keys=True, indent=4)
     print(text)
 
 
@@ -155,9 +155,9 @@ def checksum256(the_bytes):
 
 
 def isCheckSumOK(rawdata):
-    checksumCalc = checksum256(rawdata[:-1]).upper()
-    checksumComp = binascii.hexlify(rawdata[-1:]).upper()
-    checkRecordOK = checksumCalc == checksumComp
+    checksumCalc=checksum256(rawdata[:-1]).upper()
+    checksumComp=binascii.hexlify(rawdata[-1:]).upper()
+    checkRecordOK=checksumCalc == checksumComp
 
     if not checkRecordOK:
         logging.warning("INPUT CRC Error: Calc {} Compare {} - Ergebnis: {}".format(
@@ -171,59 +171,59 @@ def isCheckSumOK(rawdata):
         # check: postion52  == 02, da V-MIN Setting > 2.48 and < 3.84
         # check: postion54  == 02, da V-MAX Setting > 2.48 and < 3.84
         # check: postion56  == 02, da V-Balancing Setting > 2.48 and < 3.84
-        extendetCheckOK = True and (rawdata[0] == 0) and (rawdata[25] == 4)
+        extendetCheckOK=True and (rawdata[0] == 0) and (rawdata[25] == 4)
         if not extendetCheckOK:
             logging.warning("INPUT Quality Error: Extended Quality Check failed Voltage {}, No Battery {}".format(
                 rawdata[0], rawdata[25]))
-            checkRecordOK = False
-        extendetCheckOK = True and (
+            checkRecordOK=False
+        extendetCheckOK=True and (
             rawdata[5-1] <= 8) and (rawdata[8-1] <= 8) and (rawdata[11-1] <= 8)
         if not extendetCheckOK:
             logging.warning("INPUT Quality Error: Extended Quality Check failed Current values {}, {}, {}".format(
                 rawdata[5-1], rawdata[8-1], rawdata[11-1]))
-            checkRecordOK = False
-        extendetCheckOK = True and (
+            checkRecordOK=False
+        extendetCheckOK=True and (
             rawdata[52-1] == 2) and (rawdata[54-1] == 2) and (rawdata[56-1] == 2)
         if not extendetCheckOK:
             logging.warning("INPUT Quality Error: Extended Quality Check failed Voltage Nin/Max/Balaning values {}, {}, {}".format(
                 rawdata[52-1], rawdata[54-1], rawdata[56-1]))
-            checkRecordOK = False
+            checkRecordOK=False
 
     return checkRecordOK
 
 
 def parse_value(inputstr, start, len, *args, **kwargs):
-    factor = kwargs.get('factor', 1)
-    offset = kwargs.get('offset', 0)
-    signed = kwargs.get('signed', False)
+    factor=kwargs.get('factor', 1)
+    offset=kwargs.get('offset', 0)
+    signed=kwargs.get('signed', False)
     # for key, value in kwargs.items():
     #     print("{0} = {1}".format(key, value))
     return calc_numbers(inputstr, start, len, factor, offset, signed)
 
 
 def calc_numbers(inputstr, start, len, factor=1, offset=0, signed=False):
-    SignFactor = 1
+    SignFactor=1
     if signed:
-        Sign = inputstr[start-1:start]
+        Sign=inputstr[start-1:start]
         if Sign == b"-":
-            SignFactor = -1
+            SignFactor=-1
         else:
             if Sign == b"X":
-                SignFactor = 0
-    TextStart = start-1+signed
-    TextEnd = start-1+len
+                SignFactor=0
+    TextStart=start-1+signed
+    TextEnd=start-1+len
     return round(int(binascii.hexlify(inputstr[TextStart:TextEnd]), 16)*factor-offset, 3)*SignFactor
 
 
 def avgData(dictData):
     for key in dictData:
         if isinstance(dictData[key], list):
-            dictData[key] = round(sum(dictData[key]) / len(dictData[key]), 3)
+            dictData[key]=round(sum(dictData[key]) / len(dictData[key]), 3)
     return dictData
 
 
 def isKthBitSet(number, searchBit, testValue=1):
-    new_num = number >> (searchBit)  # K: 0 .. 7
+    new_num=number >> (searchBit)  # K: 0 .. 7
     # new_num = n >> (k - 1)  : K = 1 .. 8
     # if it results to '1' then bit is set,
     # else it results to '0' bit is unset
@@ -248,7 +248,7 @@ def decodeAndAppendData(rawdata, dicData):
     dicData.setdefault("Cell Tmax", parse_value(rawdata, 22, 2, offset=276))
     dicData.setdefault("Cell No Tmax", parse_value(rawdata, 24, 1))
     dicData.setdefault("No off cells", parse_value(rawdata, 26, 1))
-    cellNo = str(parse_value(rawdata, 25, 1))
+    cellNo=str(parse_value(rawdata, 25, 1))
     dicData.setdefault("Cell"+cellNo+"Voltage", []
                        ).append(parse_value(rawdata, 27, 2, factor=0.005))
     dicData.setdefault("Cell"+cellNo+"Temp", []
@@ -291,15 +291,15 @@ def decodeAndAppendData(rawdata, dicData):
 
 
 def sendData2webservice(data123, node_name):
-    data = json.dumps(data123)
-    myurl = '{}{}'.format(
+    data=json.dumps(data123)
+    myurl='{}{}'.format(
         emoncsm_url,
         urlencode({'node': node_name, 'time': int(time.time()),
                    'fulljson': data, 'apikey': emoncsm_apikey})
     )
     # print (myurl)
     try:
-        r = requests.get(myurl)
+        r=requests.get(myurl)
         # print (r)
     except requests.exceptions.RequestException as e:  # This is the correct syntax
         logging.error("Webservice Fehler URL:{} ERROR:{}".format(e, myurl))
@@ -308,13 +308,13 @@ def sendData2webservice(data123, node_name):
 
 
 def readSerialData(SerialConsole):
-    rawdata = b''
-    SerialByte = b''
-    ErrorCounter = 0
-    NewRecord = 0
+    rawdata=b''
+    SerialByte=b''
+    ErrorCounter=0
+    NewRecord=0
 
     while True:
-        SerialByte = SerialConsole.read()
+        SerialByte=SerialConsole.read()
         # print(binascii.hexlify(SerialByte), end = '')
         if (SerialByte == b''):
             NewRecord += 1
@@ -330,43 +330,43 @@ def readSerialData(SerialConsole):
                 else:
                     logging.warning("INPUT Error [NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(
                         NewRecord, ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
-                    rawdata = b''
-                    SerialByte = b''
+                    rawdata=b''
+                    SerialByte=b''
                     ErrorCounter += 1
                     if NewRecord < 2:
                         time.sleep(0.5)
             else:
                 ErrorCounter += 1
-                errortext = "too short" if (
+                errortext="too short" if (
                     (len(rawdata) < 58) and (ErrorCounter > 1)) else "too long"
                 logging.warning("INPUT {:10}[NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(
                     errortext, NewRecord, ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
                 if len(rawdata) > 1000:
                     SerialConsole.close()
                     SerialConsole.open()
-                rawdata = b''
-                SerialByte = b''
+                rawdata=b''
+                SerialByte=b''
 
-            NewRecord = 0
+            NewRecord=0
 
             if ErrorCounter == 10:
                 SerialConsole.close()
                 SerialConsole.open()
                 logging.critical(
                     "Serial Error: Too many Errors ({}). Closing / Opening USB Device " . format(ErrorCounter))
-                rawdata = b''
-                SerialByte = b''
+                rawdata=b''
+                SerialByte=b''
 
             if ErrorCounter > 20:
                 logging.critical("TOO MANY READ ERRORS - QUIT APP [NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(
                     NewRecord, ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
                 sys.exit(1)
 
-        rawdata = rawdata + SerialByte
+        rawdata=rawdata + SerialByte
 
 
 def openSerial(DevicePort):
-    SerialCon = serial.Serial(
+    SerialCon=serial.Serial(
         port=DevicePort, baudrate=9600,
         parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS,
         timeout=0.1
@@ -379,14 +379,14 @@ def openSerial(DevicePort):
 # ###########################
 if len(sys.argv) < 2:
     print("Autodetecting USB Port for '{}'".format(USBDeviceName))
-    serialPort = findSerialDevices(USBDeviceName)
+    serialPort=findSerialDevices(USBDeviceName)
     if (serialPort == None):
         print("Device {} not found".format(USBDeviceName))
         sys.exit(1)
     else:
         print("Device found, using port {}".format(serialPort))
 else:
-    serialPort = sys.argv[1]
+    serialPort=sys.argv[1]
     print("Using device {}".format(serialPort))
 
 
@@ -395,7 +395,7 @@ else:
 # ###########################
 if __name__ == '__main__':
     # file_name_format = '{year:04d}{month:02d}{day:02d}-{hour:02d}{minute:02d}{second:02d}.log'
-    file_name = '123smartbms.log'
+    file_name='123smartbms.log'
     solar_logger.logger_setup(file_name, '/home/pi/')
     logging.info("Starting 123SmartBMS Monitoring")
 
@@ -404,44 +404,44 @@ if __name__ == '__main__':
     # logging.warning('Warnings appear both on the console and in the logfile.')
     # logging.error('Errors get the same treatment.')
     # logging.critical('And critical messages, of course.')
-    SerialCon = openSerial(serialPort)
-    joinedRecord = dict()
-    singleRecord = b""
-    collectcycle = 0
-    fileout = open("/home/pi/123smartbms.log", "a")
-    DataLoggerQueueProcessing = 2
-    QueueMgmt = threading.Thread(
+    SerialCon=openSerial(serialPort)
+    joinedRecord=dict()
+    singleRecord=b""
+    collectcycle=0
+    fileout=open("/home/pi/123smartbms.log", "a")
+    DataLoggerQueueProcessing=2
+    QueueMgmt=threading.Thread(
         name="Queue", target=backgroudDataQueue, daemon=True)
     QueueMgmt.start()
 
     try:
         while True:
-            singleRecord = readSerialData(SerialCon)
+            singleRecord=readSerialData(SerialCon)
             collectcycle += 1
             # print(collectcycle)
             if ShowDebug:
                 print("New Record [{:2d}]: {} " . format(
                     collectcycle, binascii.hexlify(singleRecord)))
 
-            joinedRecord = decodeAndAppendData(singleRecord, joinedRecord)
+            joinedRecord=decodeAndAppendData(singleRecord, joinedRecord)
             if collectcycle >= 3:
                 #            if collectcycle >= 12:
                 #            print(joinedRecord)
                 # Collect and aggregate 10 data records to get all cell infos (cell 1 -4))
                 # and minimize webservice load
-                joinedRecord = avgData(joinedRecord)
+                joinedRecord=avgData(joinedRecord)
                 # print(joinedRecord)
                 logging.info("DATA: {}".format(json.dumps(joinedRecord)))
                 addDataQueue(joinedRecord, emoncsm_node)
                 # sendDataQueue()
 #                sendData2webservice(joinedRecord, emoncsm_node)
-                collectcycle = 0
+                collectcycle=0
                 joinedRecord.clear()
             # print ("DEBUG: Wait 0.5 sec")
             # time.sleep(0.5)
     except KeyboardInterrupt:
         # Programm wird beendet wenn CTRL+C gedrückt wird.
-        DataLoggerQueueProcessing = 1
+        DataLoggerQueueProcessing=1
         print('Warte auf Ende von DataLoggerQueueProcessing')
         QueueMgmt.join()
         print('Datensammlung wird beendet')

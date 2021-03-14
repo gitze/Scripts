@@ -12,7 +12,7 @@ SyslogIdentifier=VictronMPPT
 StandardOutput=syslog
 StandardError=syslog
 Restart=always
-RestartSec=10
+RestartSec=30
 
 [Install]
 WantedBy=multi-user.target

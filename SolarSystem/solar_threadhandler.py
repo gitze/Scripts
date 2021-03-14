@@ -9,8 +9,10 @@ from urllib.parse import urlencode, quote_plus
 import time
 import logging.handlers
 import threading
+from pympler import asizeof
 
 
+# ###########################
 # Define a class
 class DataLoggerQueue:
     def __init__(self, collector_url, collector_apikey):
@@ -21,7 +23,7 @@ class DataLoggerQueue:
         self.DataLoggerTestRun = 1
         self.DataLoggerQueueMaxSize = 2*1024*1024
         self.DataLoggerQueueReduction = 0.1
-        self.QueueMgmt
+        self.QueueMgmt = 0
 
     def tell_me_about_the_octopus(self):
         print("This octopus is " + self.color + ".")
@@ -35,7 +37,7 @@ class DataLoggerQueue:
         self.DataLoggerQueue.append(QueueItem)
         QueueSize = asizeof.asizeof(self.DataLoggerQueue)
         QueueLength = len(self.DataLoggerQueue)
-    #    print(f"Add Queue Length: {QueueLength} ({QueueSize} bytes)")
+        # print(f"Add Queue Length: {QueueLength} ({QueueSize} bytes)")
         if (QueueSize > self.DataLoggerQueueMaxSize):
             del DataLoggerQueue[:(
                 round(QueueLength*self.DataLoggerQueueReduction))]
@@ -47,16 +49,16 @@ class DataLoggerQueue:
     def sendDataQueue(self):
         currentItem = []
 
-        # if (DataLoggerTestRun == 0):
-        #     if (len(DataLoggerQueue) < 5):
-        #         DataLoggerTestRun = 1
-        # if (DataLoggerQueueProcessing < 2):
-        #     DataLoggerTestRun = 0
-        # if (DataLoggerTestRun == 1):
-        #     if (len(DataLoggerQueue) < 20):
+        # if (self.DataLoggerTestRun == 0):
+        #     if (len(self.DataLoggerQueue) < 5):
+        #         self.DataLoggerTestRun = 1
+        # if (self.DataLoggerQueueProcessing < 2):
+        #     self.DataLoggerTestRun = 0
+        # if (self.DataLoggerTestRun == 1):
+        #     if (len(self.DataLoggerQueue) < 20):
         #         return
         #     else:
-        #         DataLoggerTestRun = 0
+        #         self.DataLoggerTestRun = 0
 
         currentItem = self.DataLoggerQueue.pop()
         # print(f"POP Queue Length: {len(DataLoggerQueue)}")
@@ -79,20 +81,21 @@ class DataLoggerQueue:
             self.DataLoggerQueue.append(currentItem)
             time.sleep(10)
 
-    def backgroudDataQueue():
+    def backgroudDataQueue(self):
         while (self.DataLoggerQueueProcessing > 0):
             if (len(self.DataLoggerQueue) > 0):
-                sendDataQueue()
+                self.sendDataQueue()
                 if(self.DataLoggerQueueProcessing == 1):
                     logging.warning(
                         f"EXIT Queue - Length: {len(self.DataLoggerQueue)} ({asizeof.asizeof(self.DataLoggerQueue)}bytes)")
             elif(self.DataLoggerQueueProcessing == 1):
+                return
 
     def StartQueue(self):
         self.DataLoggerQueueProcessing = 2
         self.QueueMgmt = threading.Thread(
-            name="Queue", target=backgroudDataQueue, daemon=True)
-        QueueMgmt.start()
+            name="Queue", target=self.backgroudDataQueue, daemon=True)
+        self.QueueMgmt.start()
 
     def FlushQueue(slef):
         self.DataLoggerQueueProcessing = 1

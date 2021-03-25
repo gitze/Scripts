@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-#import time
-#import sys
+# import time
+# import sys
 import os
 import json
 import requests
@@ -22,7 +22,8 @@ class DataLoggerQueue:
         self.DataLoggerQueueProcessing = 1
         self.DataLoggerTestRun = 1
         self.DataLoggerQueueMaxSize = 2*1024*1024
-        self.DataLoggerQueueReduction = 0.1
+        self.DataLoggerQueueReduction = 0.2
+        self.DataLoggerQueueReductionStep = 2
         self.QueueMgmt = 0
 
     def tell_me_about_the_octopus(self):
@@ -37,10 +38,15 @@ class DataLoggerQueue:
         self.DataLoggerQueue.append(QueueItem)
         QueueSize = asizeof.asizeof(self.DataLoggerQueue)
         QueueLength = len(self.DataLoggerQueue)
+        QueueReduction = round(
+            QueueLength * self.DataLoggerQueueReduction) * self.DataLoggerQueueReductionStep
         # print(f"Add Queue Length: {QueueLength} ({QueueSize} bytes)")
         if (QueueSize > self.DataLoggerQueueMaxSize):
-            del DataLoggerQueue[:(
-                round(QueueLength*self.DataLoggerQueueReduction))]
+            # del self.DataLoggerQueue[:(
+            #     round(QueueLength*self.DataLoggerQueueReduction))]
+            del self.DataLoggerQueue[:QueueReduction:
+                                     self.DataLoggerQueueReductionStep]
+
             QueueSize = asizeof.asizeof(Dself.ataLoggerQueue)
             QueueLength = len(self.DataLoggerQueue)
             logging.warning(
@@ -83,11 +89,15 @@ class DataLoggerQueue:
 
     def backgroudDataQueue(self):
         while (self.DataLoggerQueueProcessing > 0):
-            if (len(self.DataLoggerQueue) > 0):
+            QueueLength = len(self.DataLoggerQueue)
+            if ((QueueLength > 5) and (QueueLength % 10) == 0):
+                logging.warning(
+                    f"Queue - Length: {QueueLength} ({asizeof.asizeof(self.DataLoggerQueue)}bytes)")
+            if (QueueLength > 0):
                 self.sendDataQueue()
                 if(self.DataLoggerQueueProcessing == 1):
                     logging.warning(
-                        f"EXIT Queue - Length: {len(self.DataLoggerQueue)} ({asizeof.asizeof(self.DataLoggerQueue)}bytes)")
+                        f"EXIT Queue - Length: {QueueLength} ({asizeof.asizeof(self.DataLoggerQueue)}bytes)")
             elif(self.DataLoggerQueueProcessing == 1):
                 return
 

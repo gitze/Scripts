@@ -10,3 +10,4 @@ SolarSystem/backup_system.sh
 RaspiBackup/backup_system.sh
 *.pyc
 .vscode/settings.json
+.vscode/settings.json

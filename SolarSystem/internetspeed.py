@@ -21,6 +21,7 @@ import subprocess
 def get_script_path():
     return os.path.dirname(os.path.realpath(sys.argv[0]))
 
+
 # ###########################
 # Config Parameter
 # ###########################
@@ -30,22 +31,27 @@ emoncsm_url = "https://url"
 
 config = configparser.ConfigParser()
 config.read(get_script_path()+'/emoncms.conf')
-emoncsm_apikey = config.get('DEFAULT',     'emoncsm_apikey', fallback = emoncsm_apikey)
-emoncsm_url    = config.get('DEFAULT',     'emoncsm_url',    fallback = emoncsm_url)
-emoncsm_node   = config.get('Sensors',     'emoncsm_node',   fallback = emoncsm_node)
+emoncsm_apikey = config.get(
+    'DEFAULT',     'emoncsm_apikey', fallback=emoncsm_apikey)
+emoncsm_url = config.get('DEFAULT',     'emoncsm_url',    fallback=emoncsm_url)
+emoncsm_node = config.get(
+    'Sensors',     'emoncsm_node',   fallback=emoncsm_node)
 # ###########################
+
 
 def formatnumber(stringnumber, recalc):
     a_float = float(stringnumber)/recalc
     formatted_float = "{:.2f}".format(a_float)
     return formatted_float
 
+
 def sendData2webservice(datadict, node_name):
     datajson = json.dumps(datadict)
     # print(datajson)
     myurl = '{}{}'.format(
         emoncsm_url,
-        urlencode({'node': node_name, 'time': int(time.time()), 'fulljson': datajson, 'apikey': emoncsm_apikey})
+        urlencode({'node': node_name, 'time': int(time.time()),
+                   'fulljson': datajson, 'apikey': emoncsm_apikey})
     )
     # print (myurl)
     try:
@@ -62,9 +68,10 @@ def sendData2webservice(datadict, node_name):
 # ###########################
 if __name__ == '__main__':
     joinedRecord = dict()
- 
+
     try:
-        response = subprocess.run(['/usr/bin/speedtest-cli', '--json'], capture_output=True, encoding='utf-8')
+        response = subprocess.run(
+            ['/usr/bin/speedtest-cli', '--json'], capture_output=True, encoding='utf-8')
         # if speedtest-cli exited with no errors / ran successfully
         if response.returncode == 0:
             # from the csv man page
@@ -74,13 +81,13 @@ if __name__ == '__main__':
             # cols = list(csv.reader([response.stdout]))[0]
             speed = json.loads(response.stdout)
 
-            print (response.stdout)
+            print(response.stdout)
             # turns 13.45 ping to 13
             ping = int(float((speed["ping"])))
 
             # speedtest-cli --csv returns speed in bits/s, convert to bytes
-            download = formatnumber(speed["download"],1024*1024)
-            upload = formatnumber(speed["upload"],1024*1024)
+            download = formatnumber(speed["download"], 1024*1024)
+            upload = formatnumber(speed["upload"], 1024*1024)
             joinedRecord.setdefault("Ping", ping)
             joinedRecord.setdefault("Download", download)
             joinedRecord.setdefault("Upload", upload)

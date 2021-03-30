@@ -16,8 +16,8 @@ import dill
 # ###########################
 # Define a class
 class DataLoggerQueue:
-    def __init__(self, name, collector_url, collector_apikey):
-        self.name = name
+    def __init__(self, collector_name, collector_url, collector_apikey):
+        self.name = collector_name
         self.url = collector_url
         self.apikey = collector_apikey
         self.DataLoggerQueue = []
@@ -27,17 +27,6 @@ class DataLoggerQueue:
         self.DataLoggerQueueReduction = 0.2
         self.DataLoggerQueueReductionStep = 2
         self.QueueMgmt = 0
-
-    def dumpDataQueue(self):
-        i = 0
-        filename = f"/opt/solar/{self.name}-DataLoggerQueue%s.dump"
-        while os.path.exists(filename % i):
-            i += 1
-        dill.dump(self.DataLoggerQueue, file=open(filename % i, "wb"))
-
-    def reloadQueue(self):
-        # self.DataLoggerQueue = dill.load(open("DataLoggerQueue.pickle", "rb"))
-        pass
 
     def addDataQueue(self, inputdata, node_name):
         QueueItem = []
@@ -86,7 +75,7 @@ class DataLoggerQueue:
             urlencode({'node': inputnode, 'apikey': self.apikey,
                        'time': inputtime, 'fulljson': inputdata})
         )
-        # print(myurl)
+        print(myurl)
         try:
             r = requests.get(myurl)
     #        print(f"Rerquest Response: {r.status_code} {r.text}")
@@ -112,11 +101,29 @@ class DataLoggerQueue:
                 return
 
     def StartQueue(self):
+        self.startDataQueue()
+
+    def startDataQueue(self):
         self.DataLoggerQueueProcessing = 2
         self.QueueMgmt = threading.Thread(
             name="Queue", target=self.backgroudDataQueue, daemon=True)
         self.QueueMgmt.start()
 
     def FlushQueue(self):
+        self.flushDataQueue()
+
+    def flushDataQueue(self):
         self.DataLoggerQueueProcessing = 1
         self.QueueMgmt.join()
+
+    def dumpDataQueue(self):
+        if len(self.DataLoggerQueue) > 0:
+            i = 0
+            filename = f"/opt/solar/{self.name}-DataLoggerQueue%s.dump"
+            while os.path.exists(filename % i):
+                i += 1
+            dill.dump(self.DataLoggerQueue, file=open(filename % i, "wb"))
+
+    def reloadQueue(self):
+        # self.DataLoggerQueue = dill.load(open("DataLoggerQueue.pickle", "rb"))
+        pass

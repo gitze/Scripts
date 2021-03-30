@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import signal
 import serial
 import serial.tools.list_ports
 import sys
@@ -287,6 +288,11 @@ else:
     print("Using device {}".format(serialPort))
 
 
+def handle_exit(sig, frame):
+    raise(SystemExit)
+
+
+signal.signal(signal.SIGTERM, handle_exit)
 # ###########################
 # Main
 # ###########################
@@ -308,7 +314,7 @@ if __name__ == '__main__':
     fileout = open("/home/pi/123smartbms.log", "a")
     EmonCMS = solar_threadhandler.DataLoggerQueue(
         "123smartbms", emoncsm_url, emoncsm_apikey)
-    EmonCMS.StartQueue()
+    EmonCMS.startDataQueue()
     try:
         while True:
             singleRecord = readSerialData(SerialCon)
@@ -337,7 +343,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         # Programm wird beendet wenn CTRL+C gedrückt wird.
         print('Warte auf Ende von DataLoggerQueueProcessing')
-        EmonCMS.FlushQueue()
+        EmonCMS.flushDataQueue()
         print('Datensammlung wird beendet')
     except Exception as e:
         print(str(e))
@@ -346,6 +352,7 @@ if __name__ == '__main__':
         print('exit handled')
     finally:
         # Das Programm wird hier beendet, sodass kein Fehler in die Console geschrieben wird.
+        EmonCMS.dumpDataQueue()
         fileout.close()
         SerialCon.close()
         print('Programm wird beendet.')

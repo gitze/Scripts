@@ -66,7 +66,7 @@ class DataLoggerQueue:
 
         currentItem = self.DataLoggerQueue.pop()
         # print(f"POP Queue Length: {len(DataLoggerQueue)}")
-        inputdata = currentItem[0]
+        inputdata = currentItem[0].encode("utf-8")
         inputtime = currentItem[1]
         inputnode = currentItem[2]
 
@@ -75,7 +75,7 @@ class DataLoggerQueue:
             urlencode({'node': inputnode, 'apikey': self.apikey,
                        'time': inputtime, 'fulljson': inputdata})
         )
-        print(myurl)
+        # print(myurl)
         try:
             r = requests.get(myurl)
     #        print(f"Rerquest Response: {r.status_code} {r.text}")

@@ -26,10 +26,6 @@ class DataLoggerQueue:
         self.DataLoggerQueueReductionStep = 2
         self.QueueMgmt = 0
 
-    def tell_me_about_the_octopus(self):
-        print("This octopus is " + self.color + ".")
-        print(self.name + " is the octopus's name.")
-
     def addDataQueue(self, inputdata, node_name):
         QueueItem = []
         QueueItem.append(json.dumps(inputdata))
@@ -47,7 +43,7 @@ class DataLoggerQueue:
             del self.DataLoggerQueue[:QueueReduction:
                                      self.DataLoggerQueueReductionStep]
 
-            QueueSize = asizeof.asizeof(Dself.ataLoggerQueue)
+            QueueSize = asizeof.asizeof(self.DataLoggerQueue)
             QueueLength = len(self.DataLoggerQueue)
             logging.warning(
                 f"New Queue Length: {QueueLength} ({QueueSize} bytes)")
@@ -107,6 +103,6 @@ class DataLoggerQueue:
             name="Queue", target=self.backgroudDataQueue, daemon=True)
         self.QueueMgmt.start()
 
-    def FlushQueue(slef):
+    def FlushQueue(self):
         self.DataLoggerQueueProcessing = 1
         self.QueueMgmt.join()

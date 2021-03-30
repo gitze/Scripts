@@ -10,12 +10,14 @@ import time
 import logging.handlers
 import threading
 from pympler import asizeof
+import dill
 
 
 # ###########################
 # Define a class
 class DataLoggerQueue:
-    def __init__(self, collector_url, collector_apikey):
+    def __init__(self, name, collector_url, collector_apikey):
+        self.name = name
         self.url = collector_url
         self.apikey = collector_apikey
         self.DataLoggerQueue = []
@@ -25,6 +27,17 @@ class DataLoggerQueue:
         self.DataLoggerQueueReduction = 0.2
         self.DataLoggerQueueReductionStep = 2
         self.QueueMgmt = 0
+
+    def dumpDataQueue(self):
+        i = 0
+        filename = f"/opt/solar/{self.name}-DataLoggerQueue%s.dump"
+        while os.path.exists(filename % i):
+            i += 1
+        dill.dump(self.DataLoggerQueue, file=open(filename % i, "wb"))
+
+    def reloadQueue(self):
+        # self.DataLoggerQueue = dill.load(open("DataLoggerQueue.pickle", "rb"))
+        pass
 
     def addDataQueue(self, inputdata, node_name):
         QueueItem = []
@@ -87,6 +100,7 @@ class DataLoggerQueue:
         while (self.DataLoggerQueueProcessing > 0):
             QueueLength = len(self.DataLoggerQueue)
             if ((QueueLength > 5) and (QueueLength % 10) == 0):
+                self.dumpDataQueue()
                 logging.warning(
                     f"Queue - Length: {QueueLength} ({asizeof.asizeof(self.DataLoggerQueue)}bytes)")
             if (QueueLength > 0):

@@ -44,7 +44,7 @@ ShowDebug = False
 
 
 def findSerialDevices(SearchPhraseArray=["VE Direct cable"]):
-    SearchTerms = len(SearchPhraseArray)
+    # SearchTerms = len(SearchPhraseArray)
     for SearchPhrase in SearchPhraseArray:
         #        print(SearchPhrase)
         SearchPhrase = "(?i)" + SearchPhrase  # forces case insensitive
@@ -204,23 +204,6 @@ def decodeAndAppendData(rawdata, dicData):
     return dicData
 
 
-def sendData2webservice(data123, node_name):
-    data = json.dumps(data123)
-    myurl = '{}{}'.format(
-        emoncsm_url,
-        urlencode({'node': node_name, 'time': int(time.time()),
-                   'fulljson': data, 'apikey': emoncsm_apikey})
-    )
-    # print (myurl)
-    try:
-        r = requests.get(myurl)
-        # print (r)
-    except requests.exceptions.RequestException as e:  # This is the correct syntax
-        logging.error("Webservice Fehler URL:{} ERROR:{}".format(e, myurl))
-        time.sleep(5)
-    return
-
-
 def readSerialData(SerialConsole):
     rawdata = b''
     SerialByte = b''
@@ -323,7 +306,8 @@ if __name__ == '__main__':
     singleRecord = b""
     collectcycle = 0
     fileout = open("/home/pi/123smartbms.log", "a")
-    EmonCMS = solar_threadhandler.DataLoggerQueue(emoncsm_url, emoncsm_apikey)
+    EmonCMS = solar_threadhandler.DataLoggerQueue(
+        "123smartbms", emoncsm_url, emoncsm_apikey)
     EmonCMS.StartQueue()
     try:
         while True:
@@ -358,6 +342,8 @@ if __name__ == '__main__':
     except Exception as e:
         print(str(e))
         sys.exit(1)
+    except (KeyboardInterrupt, SystemExit):
+        print('exit handled')
     finally:
         # Das Programm wird hier beendet, sodass kein Fehler in die Console geschrieben wird.
         fileout.close()

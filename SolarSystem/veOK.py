@@ -42,7 +42,7 @@ ShowDebug = False
 
 
 def findSerialDevices(SearchPhraseArray=["VE Direct cable"]):
-    SearchTerms = len(SearchPhraseArray)
+    #   SearchTerms = len(SearchPhraseArray)
     for SearchPhrase in SearchPhraseArray:
         #        print(SearchPhrase)
         SearchPhrase = "(?i)" + SearchPhrase  # forces case insensitive
@@ -200,7 +200,8 @@ else:
 # ###########################
 if __name__ == '__main__':
     SerialCon = openSerial(serialPort, 19200, 0.200)
-    EmonCMS = solar_threadhandler.DataLoggerQueue(emoncsm_url, emoncsm_apikey)
+    EmonCMS = solar_threadhandler.DataLoggerQueue(
+        "victron", emoncsm_url, emoncsm_apikey)
     EmonCMS.StartQueue()
     try:
         while True:

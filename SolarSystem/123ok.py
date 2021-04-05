@@ -24,7 +24,7 @@ emoncsm_node = "node_name"
 emoncsm_url = "https://url"
 
 config = configparser.ConfigParser()
-config.read('./emoncms.conf')
+config.read('/opt/solar/emoncms.conf')
 emoncsm_apikey = config.get(
     'DEFAULT',     'emoncsm_apikey', fallback=emoncsm_apikey)
 emoncsm_url = config.get('DEFAULT',     'emoncsm_url',    fallback=emoncsm_url)
@@ -34,7 +34,7 @@ emoncsm_node = config.get(
 extendetChecks = True
 USBDeviceName = ["123SmartBMS Controller"]
 
-ShowDebug = False
+ShowDebug = True
 
 # ###########################
 # Functions
@@ -213,6 +213,8 @@ def readSerialData(SerialConsole):
 
     while True:
         SerialByte = SerialConsole.read()
+        if (SerialByte == b'' and NewRecord > 10):
+            print(f"readSerialData is empty - try{NewRecord}")
         # print(binascii.hexlify(SerialByte), end = '')
         if (SerialByte == b''):
             NewRecord += 1
@@ -299,7 +301,7 @@ signal.signal(signal.SIGTERM, handle_exit)
 if __name__ == '__main__':
     # file_name_format = '{year:04d}{month:02d}{day:02d}-{hour:02d}{minute:02d}{second:02d}.log'
     file_name = '123smartbms.log'
-    solar_logger.logger_setup(file_name, '/home/pi/')
+    solar_logger.logger_setup(file_name, '/home/pi/', logging.INFO)
     logging.info("Starting 123SmartBMS Monitoring")
 
     # logging.debug('Debug messages are only sent to the logfile.')
@@ -317,7 +319,13 @@ if __name__ == '__main__':
     EmonCMS.startDataQueue()
     try:
         while True:
+            if EmonCMS.isAlive() is False:
+                print("ERROR: solar_threadhandler is not running anymore")
+                raise (SystemExit)
+
+            print("Record Sammeln: Start")
             singleRecord = readSerialData(SerialCon)
+            print("Record Sammeln: ENDE")
             collectcycle += 1
             # print(collectcycle)
             if ShowDebug:
@@ -325,7 +333,7 @@ if __name__ == '__main__':
                     collectcycle, binascii.hexlify(singleRecord)))
 
             joinedRecord = decodeAndAppendData(singleRecord, joinedRecord)
-            if collectcycle >= 3:
+            if collectcycle >= 4:
                 #            if collectcycle >= 12:
                 #            print(joinedRecord)
                 # Collect and aggregate 10 data records to get all cell infos (cell 1 -4))
@@ -333,7 +341,9 @@ if __name__ == '__main__':
                 joinedRecord = avgData(joinedRecord)
                 # print(joinedRecord)
                 logging.info("DATA: {}".format(json.dumps(joinedRecord)))
+                print("Main.addDataQueue Start")
                 EmonCMS.addDataQueue(joinedRecord, emoncsm_node)
+                print("Main.addDataQueue END")
                 # sendDataQueue()
 #                sendData2webservice(joinedRecord, emoncsm_node)
                 collectcycle = 0

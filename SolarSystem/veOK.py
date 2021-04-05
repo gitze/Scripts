@@ -27,7 +27,7 @@ emoncsm_node = "node_name"
 emoncsm_url = "https://url"
 
 config = configparser.ConfigParser()
-config.read('./emoncms.conf')
+config.read('/opt/solar/emoncms.conf')
 emoncsm_apikey = config.get(
     'DEFAULT', 'emoncsm_apikey', fallback=emoncsm_apikey)
 emoncsm_url = config.get('DEFAULT', 'emoncsm_url',    fallback=emoncsm_url)

@@ -1,10 +1,13 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
 # sudo apt install python3-rpi.gpio
 import time
 from datetime import datetime
 import sys
 import RPi.GPIO as GPIO
-import logging.handlers
 import solar_logger
+import logging
 
 
 Power_state = False
@@ -74,9 +77,11 @@ def switchPower(status):
 
 # MAIN
 try:
-    solar_logger.logger_setup('powerbutton.log', '/home/pi/')
-    logging.info("Starting Powerbutton Handling")
-    logging.info(
+    # create logger
+    logger = logging.getLogger(__name__)
+    solar_logger.logger_setup('/home/pi/')
+    logger.info("Starting Powerbutton Handling")
+    logger.info(
         f"Automatic POWER Cycle: */{AUTOMATIC_run_range[0]} for {AUTOMATIC_duration} Min")
 
     while True:
@@ -86,8 +91,8 @@ try:
 
         if BUTTON_state == True and BUTTON_state_prev == False:
             # print("Button pushed")
-            logging.info("Button pushed")
-            (f"LOG: {datetime.now()} - {LOGMSG}")
+            logger.info("Button pushed")
+            logger.info(f"LOG: {datetime.now()} - {LOGMSG}")
             BUTTON_action = "push"
             LED_state = switchLED(LED_state)
             MANUAL_state = LED_state
@@ -107,7 +112,7 @@ try:
 
         if BUTTON_state == False and BUTTON_state_prev == True:
             # print("Button Released")
-            logging.info("Button Released")
+            logger.info("Button Released")
             BUTTON_action = "release"
             cycles = 0
 
@@ -136,7 +141,7 @@ try:
         LOGMSG_prev = LOGMSG
         LOGMSG = f"BUTTON Change:{BUTTON_state_prev}->{BUTTON_state} - Action:{BUTTON_action} - LED:{LED_state} - RELAY:{RELAY_state} - MANUAL:{MANUAL_state} - AUTOMATIC:{AUTOMATIC_state}"
         if (LOGMSG != LOGMSG_prev):
-            logging.info(f"{LOGMSG}")
+            logger.info(f"{LOGMSG}")
 
         time.sleep(0.05)
 

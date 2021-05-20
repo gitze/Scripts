@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-
 import os
 import signal
 import serial
@@ -11,7 +10,7 @@ import json
 import time
 import datetime
 import configparser
-import logging.handlers
+import logging
 import solar_logger
 import solar_threadhandler
 
@@ -34,7 +33,7 @@ emoncsm_node = config.get(
 extendetChecks = True
 USBDeviceName = ["123SmartBMS Controller"]
 
-ShowDebug = True
+ShowDebug = False
 
 # ###########################
 # Functions
@@ -75,7 +74,7 @@ def isCheckSumOK(rawdata):
     checkRecordOK = checksumCalc == checksumComp
 
     if not checkRecordOK:
-        logging.warning("INPUT CRC Error: Calc {} Compare {} - Ergebnis: {}".format(
+        logger.warning("INPUT CRC Error: Calc {} Compare {} - Ergebnis: {}".format(
             checksumCalc, checksumComp, checkRecordOK))
     elif extendetChecks == True:
         # check: postion1  = 00, da Battery Voltage < 128
@@ -88,19 +87,19 @@ def isCheckSumOK(rawdata):
         # check: postion56  == 02, da V-Balancing Setting > 2.48 and < 3.84
         extendetCheckOK = True and (rawdata[0] == 0) and (rawdata[25] == 4)
         if not extendetCheckOK:
-            logging.warning("INPUT Quality Error: Extended Quality Check failed Voltage {}, No Battery {}".format(
+            logger.warning("INPUT Quality Error: Extended Quality Check failed Voltage {}, No Battery {}".format(
                 rawdata[0], rawdata[25]))
             checkRecordOK = False
         extendetCheckOK = True and (
             rawdata[5-1] <= 8) and (rawdata[8-1] <= 8) and (rawdata[11-1] <= 8)
         if not extendetCheckOK:
-            logging.warning("INPUT Quality Error: Extended Quality Check failed Current values {}, {}, {}".format(
+            logger.warning("INPUT Quality Error: Extended Quality Check failed Current values {}, {}, {}".format(
                 rawdata[5-1], rawdata[8-1], rawdata[11-1]))
             checkRecordOK = False
         extendetCheckOK = True and (
             rawdata[52-1] == 2) and (rawdata[54-1] == 2) and (rawdata[56-1] == 2)
         if not extendetCheckOK:
-            logging.warning("INPUT Quality Error: Extended Quality Check failed Voltage Nin/Max/Balaning values {}, {}, {}".format(
+            logger.warning("INPUT Quality Error: Extended Quality Check failed Voltage Nin/Max/Balaning values {}, {}, {}".format(
                 rawdata[52-1], rawdata[54-1], rawdata[56-1]))
             checkRecordOK = False
 
@@ -219,16 +218,16 @@ def readSerialData(SerialConsole):
         if (SerialByte == b''):
             NewRecord += 1
         if (SerialByte == b'' and rawdata != b'') or (len(rawdata) == 58) or (len(rawdata) >= 1000):
-            #            logging.debug("Value as HEX [{:2d}, {:2d}]: {}".format(ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
+            #            logger.debug("Value as HEX [{:2d}, {:2d}]: {}".format(ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
             #            print(rawdata[0])
             #            print(rawdata[25])
             if (len(rawdata) == 58):
                 if isCheckSumOK(rawdata):
-                    logging.debug("INPUT OK [NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(
+                    logger.debug("INPUT OK [NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(
                         NewRecord, ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
                     return rawdata
                 else:
-                    logging.warning("INPUT Error [NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(
+                    logger.warning("INPUT Error [NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(
                         NewRecord, ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
                     rawdata = b''
                     SerialByte = b''
@@ -239,7 +238,7 @@ def readSerialData(SerialConsole):
                 ErrorCounter += 1
                 errortext = "too short" if (
                     (len(rawdata) < 58) and (ErrorCounter > 1)) else "too long"
-                logging.warning("INPUT {:10}[NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(
+                logger.warning("INPUT {:10}[NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(
                     errortext, NewRecord, ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
                 if len(rawdata) > 1000:
                     SerialConsole.close()
@@ -252,13 +251,13 @@ def readSerialData(SerialConsole):
             if ErrorCounter == 10:
                 SerialConsole.close()
                 SerialConsole.open()
-                logging.critical(
+                logger.critical(
                     "Serial Error: Too many Errors ({}). Closing / Opening USB Device " . format(ErrorCounter))
                 rawdata = b''
                 SerialByte = b''
 
             if ErrorCounter > 20:
-                logging.critical("TOO MANY READ ERRORS - QUIT APP [NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(
+                logger.critical("TOO MANY READ ERRORS - QUIT APP [NEW:{:1d}, ERR:{:2d}, LEN:{:2d}]: {} " . format(
                     NewRecord, ErrorCounter, len(rawdata), binascii.hexlify(rawdata)))
                 sys.exit(1)
 
@@ -277,17 +276,28 @@ def openSerial(DevicePort):
 # ###########################
 # Input Parameter
 # ###########################
-if len(sys.argv) < 2:
-    print("Autodetecting USB Port for '{}'".format(USBDeviceName))
-    serialPort = findSerialDevices(USBDeviceName)
-    if (serialPort == None):
-        print("Device {} not found".format(USBDeviceName))
-        sys.exit(1)
+def getSerialPort():
+    if len(sys.argv) < 2:
+        logger.info("Autodetecting USB Port for '{}'".format(USBDeviceName))
+        serialPort = findSerialDevices(USBDeviceName)
+        if (serialPort == None):
+            logger.error("Device {} not found".format(USBDeviceName))
+            sys.exit(1)
+        else:
+            logger.info("Device found, using port {}".format(serialPort))
     else:
-        print("Device found, using port {}".format(serialPort))
-else:
-    serialPort = sys.argv[1]
-    print("Using device {}".format(serialPort))
+        serialPort = sys.argv[1]
+        logger.info("Using device {}".format(serialPort))
+    return(serialPort)
+
+
+def printvars():
+    tmp = globals().copy()
+    print("============================================================================")
+    [print(k, '  :  ', v, ' type:', type(v)) for k, v in tmp.items() if not k.startswith(
+        '_') and k != 'tmp' and k != 'In' and k != 'Out' and not hasattr(v, '__call__')]
+    # pprint(vars(EmonCMS))
+    print("============================================================================")
 
 
 def handle_exit(sig, frame):
@@ -299,16 +309,12 @@ signal.signal(signal.SIGTERM, handle_exit)
 # Main
 # ###########################
 if __name__ == '__main__':
-    # file_name_format = '{year:04d}{month:02d}{day:02d}-{hour:02d}{minute:02d}{second:02d}.log'
-    file_name = '123smartbms.log'
-    solar_logger.logger_setup(file_name, '/home/pi/', logging.INFO)
-    logging.info("Starting 123SmartBMS Monitoring")
-
-    # logging.debug('Debug messages are only sent to the logfile.')
-    # logging.info('Info messages are not shown on the console, too.')
-    # logging.warning('Warnings appear both on the console and in the logfile.')
-    # logging.error('Errors get the same treatment.')
-    # logging.critical('And critical messages, of course.')
+    # create logger
+    logger = logging.getLogger(__name__)
+    solar_logger.logger_setup('/home/pi/')
+    # 'application' code
+    logger.info("Starting 123SmartBMS Monitoring")
+    serialPort = getSerialPort()
     SerialCon = openSerial(serialPort)
     joinedRecord = dict()
     singleRecord = b""
@@ -320,12 +326,14 @@ if __name__ == '__main__':
     try:
         while True:
             if EmonCMS.isAlive() is False:
-                print("ERROR: solar_threadhandler is not running anymore")
+                logger.error(
+                    "ERROR: solar_threadhandler is not running anymore")
                 raise (SystemExit)
-
-            print("Record Sammeln: Start")
+            # if EmonCMS.queueSize() > 1000:
+            #     printvars()
+            logger.debug("Record Sammeln: Start")
             singleRecord = readSerialData(SerialCon)
-            print("Record Sammeln: ENDE")
+            logger.debug("Record Sammeln: ENDE")
             collectcycle += 1
             # print(collectcycle)
             if ShowDebug:
@@ -340,10 +348,8 @@ if __name__ == '__main__':
                 # and minimize webservice load
                 joinedRecord = avgData(joinedRecord)
                 # print(joinedRecord)
-                logging.info("DATA: {}".format(json.dumps(joinedRecord)))
-                print("Main.addDataQueue Start")
+                logger.debug("DATA: {}".format(json.dumps(joinedRecord)))
                 EmonCMS.addDataQueue(joinedRecord, emoncsm_node)
-                print("Main.addDataQueue END")
                 # sendDataQueue()
 #                sendData2webservice(joinedRecord, emoncsm_node)
                 collectcycle = 0
@@ -352,18 +358,17 @@ if __name__ == '__main__':
             # time.sleep(0.5)
     except KeyboardInterrupt:
         # Programm wird beendet wenn CTRL+C gedrückt wird.
-        print('Warte auf Ende von DataLoggerQueueProcessing')
+        logger.info('Warte auf Ende von DataLoggerQueueProcessing')
         EmonCMS.flushDataQueue()
-        print('Datensammlung wird beendet')
+        logger.info('Datensammlung wird beendet')
     except Exception as e:
-        print(str(e))
+        logger.critical(f'Unerwarteter Abbruch: {str(e)}')
         sys.exit(1)
     except (KeyboardInterrupt, SystemExit):
-        print('exit handled')
+        logger.info('Programm Abbruch wird eingeleitet')
     finally:
         # Das Programm wird hier beendet, sodass kein Fehler in die Console geschrieben wird.
         EmonCMS.dumpDataQueue()
-        fileout.close()
         SerialCon.close()
-        print('Programm wird beendet.')
+        logger.info('Programm wurde beendet.')
         sys.exit(0)

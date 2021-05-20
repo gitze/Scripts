@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 # pip3 install pyserial
@@ -17,7 +17,7 @@ import solar_logger
 import serial
 import serial.tools.list_ports
 import solar_threadhandler
-
+import logging
 
 # ###########################
 # Config Parameter
@@ -58,13 +58,6 @@ def checksum256(the_bytes):
     return (sum(the_bytes) % 256)
 
 
-def abortProgram(errortext):
-    print("ABORT PROGRAM")
-    print(errortext)
-    SerialCon.close()
-    sys.exit(1)
-
-
 # def signal_handler(signum, frame):
 #     print('Here you go - you presses CTRL-C')
 #     abortProgram("due to CTRL-C'")
@@ -78,13 +71,16 @@ def ve_readinput(SerialCon):
         try:
             Byte = SerialCon.readline()
         except Exception as Error:
-            print("An exception occurred: {}".format(Error))
+            logger.debug("An exception occurred: {}".format(Error))
+            return 98
+
         ControlCycles = ControlCycles+1
         if (ControlCycles > 100):
-            logit("ERROR|Serial Connection Issues. No data received within the last {} reading cycles|{}".format(
+            logger.error("ERROR|Serial Connection Issues. No data received within the last {} reading cycles|{}".format(
                 ControlCycles, ControlCycles))
             # abortProgram("No valid Victron Serial data received. Device not connected?")
             return 99
+
         if (Bytes == b'\r\n'):
             Bytes = b''  # Remove '\r\n' as first bytes in the result
         if (Byte[:8] == b'Checksum'):
@@ -94,24 +90,26 @@ def ve_readinput(SerialCon):
             # Add '\r\n' to the correct checksum calsulation
             ByteChecksum = checksum256(Bytes + b'\r\n')
             if (ByteChecksum > 0):
-                logit("ERROR|Checksum wrong|{}|{}".format(ByteChecksum, Bytes))
-                return None  # Checksum wrong
+                logger.error("ERROR|Checksum wrong|{}|{}".format(
+                    ByteChecksum, Bytes))
+                return 1  # Checksum wrong
             try:
                 InputDict = dict(xx.split(b'\t')
                                  for xx in Bytes.split(b'\r\n'))
-                # Remove Checksum, but wiothout `KeyError`
+                # Remove Checksum, but without `KeyError`
                 InputDict.pop(b'Checksum', None)
                 InputDict = {keyy.decode(
                     'utf-8'): InputDict.get(keyy).decode('utf-8') for keyy in InputDict.keys()}
                 return InputDict
             except Exception as Error:
-                print("An unexpected exception occurred: {}".format(Error))
+                logger.error(
+                    "An unexpected exception occurred: {}".format(Error))
                 return 10  # An Error occured during value processing. This should not happen
             Bytes = b''
         # else:
         #         print ("ELSE")
     logit("ERROR|Unexpected point of code ")
-    return None
+    return 999
 
 
 def openSerial(DevicePort, BaudRate, TimeOut):
@@ -168,43 +166,62 @@ def cleanupData(dicData):
     return dicData
 
 
-def logit(logvalue):
-    filehandler = open("/home/pi/victron.log", "a")
-    filehandler.write(datetime.datetime.now().strftime(
-        '%Y-%m-%d %H:%M:%S') + "|" + logvalue + "\n")
-    filehandler.flush()
-    filehandler.close()
-    if ShowDebug:
-        print("DEBUG:" + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "|" + logvalue)
-    return
-
-
 # ###########################
 # Input Parameter
 # ###########################
-if len(sys.argv) < 2:
-    print("Autodetecting USB Port for '{}'".format(USBDeviceName))
-    serialPort = findSerialDevices(USBDeviceName)
-    if (serialPort == None):
-        print("Device {} not found".format(USBDeviceName))
-        sys.exit(1)
+def getSerialPort():
+    if len(sys.argv) < 2:
+        logger.info("Autodetecting USB Port for '{}'".format(USBDeviceName))
+        serialPort = findSerialDevices(USBDeviceName)
+        if (serialPort == None):
+            logger.error("Device {} not found".format(USBDeviceName))
+            sys.exit(1)
+        else:
+            logger.info("Device found, using port {}".format(serialPort))
     else:
-        print("Device found, using port {}".format(serialPort))
-else:
-    serialPort = sys.argv[1]
-    print("Using device {}".format(serialPort))
+        serialPort = sys.argv[1]
+        logger.info("Using device {}".format(serialPort))
+    return(serialPort)
 
+
+def printvars():
+    tmp = globals().copy()
+    print("============================================================================")
+    [print(k, '  :  ', v, ' type:', type(v)) for k, v in tmp.items() if not k.startswith(
+        '_') and k != 'tmp' and k != 'In' and k != 'Out' and not hasattr(v, '__call__')]
+    # pprint(vars(EmonCMS))
+    print("============================================================================")
+
+
+# ###########################
+# Exception Handling
+# ###########################
+def handle_exit(sig, frame):
+    raise(SystemExit)
+
+
+signal.signal(signal.SIGTERM, handle_exit)
 
 # ###########################
 # Main
 # ###########################
 if __name__ == '__main__':
+    # create logger
+    logger = logging.getLogger(__name__)
+    solar_logger.logger_setup('/home/pi/')
+
+    logger.info("Starting Victron Monitoring")
+    serialPort = getSerialPort()
     SerialCon = openSerial(serialPort, 19200, 0.200)
     EmonCMS = solar_threadhandler.DataLoggerQueue(
         "victron", emoncsm_url, emoncsm_apikey)
     EmonCMS.StartQueue()
     try:
         while True:
+            if EmonCMS.isAlive() is False:
+                logger.error(
+                    "ERROR: solar_threadhandler is not running anymore")
+                raise (SystemExit)
             TimerStart = int(time.time())
             ve_data = ve_readinput(SerialCon)
             if isinstance(ve_data, dict):
@@ -218,23 +235,26 @@ if __name__ == '__main__':
                 TimerEnd = int(time.time())
                 time.sleep(max([5 - (TimerEnd - TimerStart), 0]))
             else:
-                logit("ERROR|veDateRead Error Code|{}".format(ve_data))
+                logger.error(f"ERROR|veDateRead Error Code|{ve_data}")
                 # if (ve_data == None):
                 # if (ve_data == 10):
                 if (ve_data == 99):
-                    abortProgram(
+                    logger.error(
                         "No valid Victron Serial data received. Device not connected?")
+                    raise(SystemExit)
     except KeyboardInterrupt:
         # Programm wird beendet wenn CTRL+C gedrückt wird.
-        print('Warte auf Ende von DataLoggerQueueProcessing')
-        EmonCMS.FlushQueue()
-        print('Datensammlung wird beendet')
+        logger.info('Warte auf Ende von DataLoggerQueueProcessing')
+        EmonCMS.flushDataQueue()
+        logger.info('Datensammlung wird beendet')
     except Exception as e:
-        print(str(e))
+        logger.critical(f'Unerwarteter Abbruch: {str(e)}')
         sys.exit(1)
+    except (KeyboardInterrupt, SystemExit):
+        logger.info('Programm Abbruch wird eingeleitet')
     finally:
         # Das Programm wird hier beendet, sodass kein Fehler in die Console geschrieben wird.
-        #        fileout.close()
+        EmonCMS.dumpDataQueue()
         SerialCon.close()
-        print('Programm wird beendet.')
+        logger.info('Programm wurde beendet.')
         sys.exit(0)

@@ -1,5 +1,5 @@
 [Unit]
-Description=Solar Power Mahagement 
+Description=Solar Power Button 
 After=syslog.target network.target
 
 [Service]
@@ -17,7 +17,3 @@ RestartSec=30
 [Install]
 WantedBy=multi-user.target
 
-#sudo cp powerbutton.service /etc/systemd/system/powerbutton.service
-#sudo systemctl start powerbutton.service
-#sudo systemctl stop powerbutton.service
-#sudo systemctl enable powerbutton.service

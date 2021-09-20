@@ -15,6 +15,15 @@ import logging
 # logger = logging.getLogger("solarlogger")
 logger = logging.getLogger(__name__)
 
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+
+def HandleThreadingException(args):
+    logger.error(f'ERROR, Threading died unexpected. Caught {args.exc_type} with value {args.exc_value} in thread {args.thread}\n')
+    raise(SystemExit)
+threading.excepthook = HandleThreadingException
+
 
 # ###########################
 # Define a class
@@ -30,13 +39,30 @@ class DataLoggerQueue:
         self.DataLoggerQueueReduction = 0.2
         self.DataLoggerQueueReductionStep = 2
         self.QueueMgmt = 0
+        self.lock = threading.Lock()
+
+    def queueAddItem(self, QueueItem):
+        self.lock.acquire()
+        try:
+            self.DataLoggerQueue.append(QueueItem)
+        finally:
+            self.lock.release()        
+
+    def queueRetrieveItem(self):
+        self.lock.acquire()
+        try:
+            currentItem = self.DataLoggerQueue.pop()
+        finally:
+            self.lock.release()        
+            return currentItem
 
     def addDataQueue(self, inputdata, node_name):
         QueueItem = []
         QueueItem.append(json.dumps(inputdata))
         QueueItem.append(int(time.time()))
         QueueItem.append(node_name)
-        self.DataLoggerQueue.append(QueueItem)
+        self.queueAddItem(QueueItem)
+        # self.DataLoggerQueue.append(QueueItem)
         QueueSize = asizeof.asizeof(self.DataLoggerQueue)
         QueueLength = len(self.DataLoggerQueue)
         logger.debug(
@@ -78,7 +104,7 @@ class DataLoggerQueue:
 
         logger.debug(
             f"sendDataQueue: Send Data - Length: {len(self.DataLoggerQueue)}")
-        currentItem = self.DataLoggerQueue.pop()
+        currentItem = self.queueRetrieveItem()
         inputdata = currentItem[0].encode("utf-8")
         inputtime = currentItem[1]
         inputnode = currentItem[2]
@@ -88,24 +114,26 @@ class DataLoggerQueue:
             urlencode({'node': inputnode, 'apikey': self.apikey,
                        'time': inputtime, 'fulljson': inputdata})
         )
-        # print(myurl)
         try:
-            r = requests.get(myurl)
-            logger.debug(
-                f"sendDataQueue: Request: {myurl}")
-            logger.debug(
-                f"sendDataQueue: Request Response: {r.text}")
+            r = requests.get(myurl, timeout=5)
+            logger.debug(f"sendDataQueue: Request: {myurl}")
+            logger.debug(f"sendDataQueue: Request Response: {r.text}")
             r.raise_for_status()
-        except requests.exceptions.RequestException as e:  # This is the correct syntax
-            logger.error(
-                f"sendDataQueue: Webservice Fehler URL:{myurl} ERROR:{e}")
-            self.DataLoggerQueue.append(currentItem)
-            time.sleep(10)
+        # except requests.exceptions.Timeout as e:
+        #     logger.error(
+        #         f"sendDataQueue: Webservice Timeout URL:{myurl} ERROR:{e}")
+        #     self.queueAddItem(QueueItem)
+        #     time.sleep(10)            
+        # except requests.exceptions.RequestException as e:  # This is the correct syntax
+        #     logger.error(
+        #         f"sendDataQueue: Webservice Fehler URL:{myurl} ERROR:{e}")
+        #     self.queueAddItem(QueueItem)
+        #     time.sleep(10)            
         except Exception as e:
-            logger.error(
-                f"sendDataQueue: Unbekannter Fehler - URL:{myurl} ERROR:{e}")
-            self.DataLoggerQueue.append(currentItem)
-            time.sleep(10)
+            self.queueAddItem(currentItem)
+            logger.error(f"sendDataQueue: Fehler Code: {e}")
+            logger.error(f"sendDataQueue: Fehler URL : {myurl}")
+#            time.sleep(10)
         logger.debug("sendDataQueue: END")
 
     def backgroudDataQueue(self):
@@ -150,23 +178,22 @@ class DataLoggerQueue:
             filename = f"/opt/solar/{self.name}-DataLoggerQueue.txt"
             dill.dump(self.DataLoggerQueue, file=open(filename, "wb"))
             logger.info(
-                f"dumpDataQueue: Dumped {len(self.DataLoggerQueue)} remaining records to file'{filename}'")
-            logger.warning(
-                f"dumpDataQueue: Length: {len(self.DataLoggerQueue)} ({asizeof.asizeof(self.DataLoggerQueue)}bytes)")
+                f"Save Data: Dumped {len(self.DataLoggerQueue)} remaining records to file'{filename}'")
 
     def reloadQueue(self):
         filename = f"/opt/solar/{self.name}-DataLoggerQueue.txt"
         if os.path.exists(filename):
             self.DataLoggerQueue = dill.load(open(filename, "rb"))
             os.remove(filename)
-            logger.info(f"reloadQueue: Reload file'{filename}'")
+            logger.info(f"Reload {len(self.DataLoggerQueue)} records from file'{filename}'")
+
         else:
             logger.info(
-                f"reloadQueue: Nothing to reload - file'{filename}' does not exist")
+                f"Reload Data: Nothing to reload - file'{filename}' does not exist")
 
     def isAlive(self):
         return self.QueueMgmt.is_alive()
 
-    def queueSize(self):
+    def queueLength(self):
         # print(len(self.DataLoggerQueue))
         return len(self.DataLoggerQueue)

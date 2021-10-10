@@ -320,55 +320,45 @@ if __name__ == '__main__':
     singleRecord = b""
     collectcycle = 0
     fileout = open("/home/pi/123smartbms.log", "a")
-    EmonCMS = solar_threadhandler.DataLoggerQueue(
-        "123smartbms", emoncsm_url, emoncsm_apikey)
-    EmonCMS.startDataQueue()
+    EmonCMS = solar_threadhandler.DataLoggerQueue("123smartbms", emoncsm_url, emoncsm_apikey)
+    EmonCMS.StartQueue()
     try:
         while True:
             if EmonCMS.isAlive() is False:
-                logger.error(
-                    "ERROR: solar_threadhandler is not running anymore")
+                logger.error("ERROR: solar_threadhandler is not running anymore")
                 raise (SystemExit)
             # if EmonCMS.queueSize() > 1000:
             #     printvars()
-            logger.debug("Record Sammeln: Start")
+#            logger.debug("Record Sammeln: Start")
             singleRecord = readSerialData(SerialCon)
-            logger.debug("Record Sammeln: ENDE")
+#            logger.debug("Record Sammeln: ENDE")
             collectcycle += 1
             # print(collectcycle)
             if ShowDebug:
-                print("New Record [{:2d}]: {} " . format(
-                    collectcycle, binascii.hexlify(singleRecord)))
-
+                print("New Record [{:2d}]: {} " . format(collectcycle, binascii.hexlify(singleRecord)))
             joinedRecord = decodeAndAppendData(singleRecord, joinedRecord)
             if collectcycle >= 4:
-                #            if collectcycle >= 12:
-                #            print(joinedRecord)
                 # Collect and aggregate 10 data records to get all cell infos (cell 1 -4))
                 # and minimize webservice load
                 joinedRecord = avgData(joinedRecord)
-                # print(joinedRecord)
-                logger.debug("DATA: {}".format(json.dumps(joinedRecord)))
+#                logger.debug("DATA: {}".format(json.dumps(joinedRecord)))
                 EmonCMS.addDataQueue(joinedRecord, emoncsm_node)
-                # sendDataQueue()
-#                sendData2webservice(joinedRecord, emoncsm_node)
                 collectcycle = 0
                 joinedRecord.clear()
-            # print ("DEBUG: Wait 0.5 sec")
-            # time.sleep(0.5)
     except KeyboardInterrupt:
         # Programm wird beendet wenn CTRL+C gedrückt wird.
         logger.info('Warte auf Ende von DataLoggerQueueProcessing')
-        EmonCMS.flushDataQueue()
+        EmonCMS.StopQueue()
         logger.info('Datensammlung wird beendet')
     except Exception as e:
         logger.critical(f'Unerwarteter Abbruch: {str(e)}')
+        EmonCMS.StopQueue(forceStop=True)
         sys.exit(1)
     except (KeyboardInterrupt, SystemExit):
         logger.info('Programm Abbruch wird eingeleitet')
     finally:
         # Das Programm wird hier beendet, sodass kein Fehler in die Console geschrieben wird.
-        EmonCMS.dumpDataQueue()
+        EmonCMS.StopQueue(forceStop=True)
         SerialCon.close()
         logger.info('Programm wurde beendet.')
         sys.exit(0)

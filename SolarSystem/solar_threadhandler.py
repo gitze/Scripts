@@ -36,18 +36,17 @@ class status(enum.Enum):
 # ###########################
 # Define a class
 class DataLoggerQueue:
-    def __init__(self, collector_name, collector_url, collector_apikey):
-        self.name = collector_name
-        self.url = collector_url
-        self.apikey = collector_apikey
+    def __init__(self, queue_name, api_url, api_key):
+        self.name = queue_name
+        self.url = api_url
+        self.apikey = api_key
         self.DataLoggerQueue = []
         self.DataLoggerQueuelength = 0
         self.DataLoggerAPIStatus = status.OK
         self.DataLoggerAPINextRetry = 0
         self.DataLoggerQueueProcessing = status.RUN
-        self.QueueMgmt = 0
-        self.DataLoggerTestRun = 1
         self.DataLoggerQueueMaxSize = 500*1024*1024
+        self.BackgroundQueueManager = 0
         self.lock = threading.Lock()
 
     # def _text2string(inputtext):
@@ -99,7 +98,7 @@ class DataLoggerQueue:
     def _sendDataQueue(self):
 #        logger.debug(f"sendDataQueue: Start")
         # If last WEB Call was not successful, don't try until nextRetry time is reached
-        if ( self.DataLoggerAPIStatus == status.ERROR):            
+        if (self.DataLoggerAPIStatus == status.ERROR):            
             logger.debug(f"sendDataQueue: Status: ERROR Next Retry {self.DataLoggerAPINextRetry} Current {int(time.time())}")                
             if (self.DataLoggerAPINextRetry < int(time.time())): self.DataLoggerAPINextRetry = 0
             else: return
@@ -129,6 +128,7 @@ class DataLoggerQueue:
 
 
     def backgroudDataQueue(self):
+        # Background Job
         logger.debug("backgroudDataQueue: Start")
         while True:
             if ((self.DataLoggerQueuelength > 5) and (self.DataLoggerQueuelength % 10) == 0):
@@ -144,14 +144,14 @@ class DataLoggerQueue:
     def _startDataQueue(self):
         self.DataLoggerQueueProcessing = status.RUN
         self._reloadQueue()
-        self.QueueMgmt = threading.Thread(name="DataQueue", target=self.backgroudDataQueue, daemon=True)
-        self.QueueMgmt.start()
+        self.BackgroundQueueManager = threading.Thread(name="DataQueue", target=self.backgroudDataQueue, daemon=True)
+        self.BackgroundQueueManager.start()
 
 
     def _flushDataQueue(self, forceStop):
         if (forceStop == False):
             self.DataLoggerQueueProcessing = status.END # Send 
-            self.QueueMgmt.join(timeout=60) # Wait for 60 to settle, then abort
+            self.BackgroundQueueManager.join(timeout=60) # Wait for 60 to settle, then abort
         self._dumpDataQueue() # save remaining items
 
 
@@ -209,6 +209,8 @@ class DataLoggerQueue:
     def StopQueue(self, forceStop = False):
         self._flushDataQueue(forceStop)
         self.DataLoggerQueue = []
+        self.DataLoggerQueuelength = 0
+
 
     def isAlive(self):
-        return self.QueueMgmt.is_alive()
+        return self.BackgroundQueueManager.is_alive()

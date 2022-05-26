@@ -91,16 +91,11 @@ def isCheckSumOK(rawdata):
                 rawdata[0], rawdata[25]))
             checkRecordOK = False
         extendetCheckOK = True and (
-            rawdata[5-1] <= 8) and (rawdata[8-1] <= 8) and (rawdata[11-1] <= 8)
+            # rawdata[5-1] <= 8) and (rawdata[8-1] <= 8) and (rawdata[11-1] <= 8)
+            rawdata[5-1] <= 8) and (rawdata[11-1] <= 8)
         if not extendetCheckOK:
             logger.warning("INPUT Quality Error: Extended Quality Check failed Current values {}, {}, {}".format(
                 rawdata[5-1], rawdata[8-1], rawdata[11-1]))
-            checkRecordOK = False
-        extendetCheckOK = True and (
-            rawdata[52-1] == 2) and (rawdata[54-1] == 2) and (rawdata[56-1] == 2)
-        if not extendetCheckOK:
-            logger.warning("INPUT Quality Error: Extended Quality Check failed Voltage Nin/Max/Balaning values {}, {}, {}".format(
-                rawdata[52-1], rawdata[54-1], rawdata[56-1]))
             checkRecordOK = False
 
     return checkRecordOK
@@ -126,7 +121,12 @@ def calc_numbers(inputstr, start, len, factor=1, offset=0, signed=False):
                 SignFactor = 0
     TextStart = start-1+signed
     TextEnd = start-1+len
-    return round(int(binascii.hexlify(inputstr[TextStart:TextEnd]), 16)*factor-offset, 3)*SignFactor
+    RawNumber = int(binascii.hexlify(inputstr[TextStart:TextEnd]), 16)
+    if signed:
+        if RawNumber > 32767:
+            RawNumber = 65535 - RawNumber + 1 
+            SignFactor = SignFactor * (-1)
+    return round(RawNumber*factor-offset, 3)*SignFactor
 
 
 def avgData(dictData):
@@ -147,26 +147,21 @@ def isKthBitSet(number, searchBit, testValue=1):
 def decodeAndAppendData(rawdata, dicData):
     dicData.setdefault("TotalVoltage", parse_value(
         rawdata, 1, 3, factor=0.005))
-    dicData.setdefault("CurrentIN", []).append(
-        parse_value(rawdata, 4, 3, factor=0.125, signed=True))
-    dicData.setdefault("CurrentOUT", []).append(
-        parse_value(rawdata, 7, 3, factor=0.125, signed=True))
-    dicData.setdefault("CurrentDELTA", []).append(
-        parse_value(rawdata, 10, 3, factor=0.125, signed=True))
+    dicData.setdefault("CurrentIN", []).append(parse_value(rawdata, 4, 3, factor=0.125, signed=True))
+    dicData.setdefault("CurrentOUT", []).append(parse_value(rawdata, 7, 3, factor=0.125, signed=True))
+    dicData.setdefault("CurrentDELTA", []).append(parse_value(rawdata, 10, 3, factor=0.125, signed=True))
     dicData.setdefault("Cell Vmin", parse_value(rawdata, 13, 2, factor=0.005))
     dicData.setdefault("Cell No Vmin", parse_value(rawdata, 15, 1))
     dicData.setdefault("Cell Vmax", parse_value(rawdata, 16, 2, factor=0.005))
     dicData.setdefault("Cell No Vmax", parse_value(rawdata, 18, 1))
-    dicData.setdefault("Cell Tmin", parse_value(rawdata, 19, 2, offset=276))
+    dicData.setdefault("Cell Tmin", parse_value(rawdata, 19, 2, factor=0.857, offset=232))
     dicData.setdefault("Cell No Tmin", parse_value(rawdata, 21, 1))
-    dicData.setdefault("Cell Tmax", parse_value(rawdata, 22, 2, offset=276))
+    dicData.setdefault("Cell Tmax", parse_value(rawdata, 22, 2, factor=0.857, offset=232))
     dicData.setdefault("Cell No Tmax", parse_value(rawdata, 24, 1))
     dicData.setdefault("No off cells", parse_value(rawdata, 26, 1))
     cellNo = str(parse_value(rawdata, 25, 1))
-    dicData.setdefault("Cell"+cellNo+"Voltage", []
-                       ).append(parse_value(rawdata, 27, 2, factor=0.005))
-    dicData.setdefault("Cell"+cellNo+"Temp", []
-                       ).append(parse_value(rawdata, 29, 2, offset=276))
+    dicData.setdefault("Cell"+cellNo+"Voltage", []).append(parse_value(rawdata, 27, 2, factor=0.005))
+    dicData.setdefault("Cell"+cellNo+"Temp", []).append(parse_value(rawdata, 29, 2, factor=0.857, offset=232))
     dicData.setdefault("TodayEnergy collected", parse_value(rawdata, 32, 3))
     dicData.setdefault("Energy stored", parse_value(rawdata, 35, 3))
     dicData.setdefault("Today Energy consumed", parse_value(rawdata, 38, 3))

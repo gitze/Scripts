@@ -210,7 +210,7 @@ if __name__ == '__main__':
                 logger.error(f"ERROR|veDateRead Error Code|{ve_data}")
                 # if (ve_data == None):
                 # if (ve_data == 10):
-                if (ve_data == 99):
+                if (ve_data == 98) or (ve_data == 99):
                     logger.error(
                         "No valid Victron Serial data received. Device not connected?")
                     raise(SystemExit)

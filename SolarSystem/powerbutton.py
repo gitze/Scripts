@@ -15,7 +15,7 @@ LED_state = False   # Init = LED   is OFF
 RELAY_state = False  # Init = Relay is OFF
 MANUAL_state = False
 AUTOMATIC_state = False
-AUTOMATIC_duration = 15  # in Minutes
+AUTOMATIC_duration = 12  # in Minutes
 AUTOMATIC_run_range = range(32, 32 + AUTOMATIC_duration)
 LOGMSG = ""
 
@@ -23,9 +23,10 @@ BUTTON_state = False
 BUTTON_action = "wait"
 cycles = 0
 
-BUTTON_GPIO = 16
-LED_GPIO = 24
-RELAY_GPIO = 23
+BUTTON_GPIO = 13
+LED_GPIO = 5
+RELAY2_GPIO = 18
+RELAY_GPIO = 18
 
 GPIO.setmode(GPIO.BCM)
 # GPIO.setup(BUTTON_GPIO, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Button to GPIO16
@@ -42,7 +43,7 @@ GPIO.setup(LED_GPIO, GPIO.OUT)  # LED to GPIO24
 GPIO.setup(RELAY_GPIO, GPIO.OUT)  # LED to GPIO23
 # INIT GPIO
 GPIO.output(LED_GPIO, LED_state)
-# Logic umgedreht, um True = An,m False = Aus zu haben
+# Logic umgedreht, um True = An, False = Aus zu haben
 GPIO.output(RELAY_GPIO, not RELAY_state)
 
 
@@ -81,8 +82,7 @@ try:
     logger = logging.getLogger(__name__)
     solar_logger.logger_setup('/home/pi/')
     logger.info("Starting Powerbutton Handling")
-    logger.info(
-        f"Automatic POWER Cycle: */{AUTOMATIC_run_range[0]} for {AUTOMATIC_duration} Min")
+    logger.info(f"Automatic POWER Cycle: */{AUTOMATIC_run_range[0]} for {AUTOMATIC_duration} Min")
 
     while True:
         BUTTON_state_prev = BUTTON_state
@@ -118,7 +118,7 @@ try:
 
         y, m, d, h, min, sec, wd, yd, i = datetime.now().timetuple()
         if (AUTOMATIC_state == False):
-            if (min in AUTOMATIC_run_range):
+            if ((min in AUTOMATIC_run_range) and ((h % 3) == 0)):
                 AUTOMATIC_StartTime = int(time.time())  # epoch seconds
                 AUTOMATIC_state = True
                 RELAY_state = setPower(True)
@@ -139,7 +139,7 @@ try:
         #     print(h, min, sec)
 
         LOGMSG_prev = LOGMSG
-        LOGMSG = f"BUTTON Change:{BUTTON_state_prev}->{BUTTON_state} - Action:{BUTTON_action} - LED:{LED_state} - RELAY:{RELAY_state} - MANUAL:{MANUAL_state} - AUTOMATIC:{AUTOMATIC_state}"
+        LOGMSG = f"BUTTON Change:{BUTTON_state_prev}->{BUTTON_state} - Action:{BUTTON_action} - LED:{LED_state} - RELAY:{RELAY_state}({GPIO.input(RELAY_GPIO)}) - MANUAL:{MANUAL_state} - AUTOMATIC:{AUTOMATIC_state}"
         if (LOGMSG != LOGMSG_prev):
             logger.info(f"{LOGMSG}")
 

@@ -1,0 +1,11 @@
+[Unit]
+Description=Runs Check Network Status every 20 minutes
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=20min
+Unit= network_status.service
+
+[Install]
+WantedBy=multi-user.target
+

@@ -20,7 +20,9 @@ __VERBOSE=6
 
 #GPIO / AMP Management
 PORT=23
-
+PORT=26
+PORT=17
+PORT=18
 
 LogIt () {
   local LEVEL=${1}
@@ -38,8 +40,8 @@ InitGPIO(){
    if ! [ -d /sys/class/gpio/gpio$PORT ]
    then
       echo "$PORT" > /sys/class/gpio/export
-      echo "out" > /sys/class/gpio/gpio$PORT/direction
    fi
+   echo "out" > /sys/class/gpio/gpio$PORT/direction
    echo 1 > /sys/class/gpio/gpio$PORT/value
 }
 

@@ -1,0 +1,8 @@
+#sudo nano /etc/systemd/system/network_status.service
+[Unit]
+Description=Check Network Status
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/network_status.sh
+

@@ -1,17 +1,19 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #import time
 import gzip
 import logging.handlers
 import os
 import sys
+import threading
 
 # Define the default logging message formats.
 #file_msg_format = '%(asctime)s %(levelname)-8s: %(message)s'
 #file_msg_format = '[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s'
-file_msg_format = '%(asctime)s|%(levelname)s|%(threadName)s|%(name)s.%(funcName)s:%(lineno)d|%(message)s'
+file_msg_format = '%(asctime)s|%(levelname)-8s|%(threadName)s|%(name)s.%(funcName)s:%(lineno)-4d|%(message)s'
 console_msg_format = '%(levelname)s - %(processName)s - %(threadName)s - %(message)s'
 console_msg_format = '%(levelname)s: %(message)s'
+console_msg_format = '%(message)s'
 logger = 0
 
 # Define the log rotation criteria.
@@ -22,6 +24,16 @@ backup_count = 10
 
 class GZipRotator:
     def __call__(self, source, dest):
+        print(f"LOGGER ROTATE INIT {source} {dest}")
+        logrotate_thread = threading.Thread(
+            target="logrotate_compress", name="Logrotate", args=(source, dest))
+        print(f"LOGGER ROTATE Thread prepared {logrotate_thread}")
+        print(f"LOGGER ROTATE Thread call START {logrotate_thread}")        
+        logrotate_thread.start()
+        print(f"LOGGER ROTATE Thread START called {logrotate_thread}")        
+
+    def logrotate_compress(source, dest):
+        print(f"COMPRESS INIT {source} {dest}")
         os.rename(source, dest)
         f_in = open(dest, 'rb')
         f_out = gzip.open("%s.gz" % dest, 'wb')
@@ -29,6 +41,8 @@ class GZipRotator:
         f_out.close()
         f_in.close()
         os.remove(dest)
+        print(f"COMPRESS FINISHED {source} {dest}")
+
 
 
 def logger_setup(dir='/var/log', LogFileLevel=logging.DEBUG, ErrorFileLevel=logging.ERROR, ConsoleLevel=logging.INFO):
@@ -67,20 +81,21 @@ def logger_setup(dir='/var/log', LogFileLevel=logging.DEBUG, ErrorFileLevel=logg
 
     # Set up logging to the logfile.
     #file_handler = RotatingFileHandler(file_name, maxBytes=max_bytes, backupCount=backup_count)
-    file_handler = logging.handlers.TimedRotatingFileHandler(
-        file_name, when="midnight", backupCount=backup_count)
+    file_handler = logging.handlers.TimedRotatingFileHandler(file_name, when="midnight", backupCount=backup_count)
+    # file_handler = logging.handlers.TimedRotatingFileHandler(file_name, when="midnight", backupCount=backup_count)
     file_handler.setLevel(LogFileLevel)
     file_handler.setFormatter(Formatter_File)
-    file_handler.rotator = GZipRotator()
+#    file_handler.rotator = GZipRotator()
     logger.addHandler(file_handler)
+
 
     # Set up logging to the logfile.
     #file_handler = RotatingFileHandler(file_name, maxBytes=max_bytes, backupCount=backup_count)
-    file_handlerError = logging.handlers.TimedRotatingFileHandler(
-        file_name_error, when="midnight", backupCount=backup_count)
+    file_handlerError = logging.handlers.TimedRotatingFileHandler(file_name_error, when="midnight", backupCount=backup_count)
+    #file_handlerError = logging.handlers.TimedRotatingFileHandler(file_name_error, when='h', interval=1, backupCount=backup_count)
     file_handlerError.setLevel(ErrorFileLevel)
     file_handlerError.setFormatter(Formatter_File)
-    file_handlerError.rotator = GZipRotator()
+#    file_handlerError.rotator = GZipRotator()
     logger.addHandler(file_handlerError)
 
     # Set up logging to the console.

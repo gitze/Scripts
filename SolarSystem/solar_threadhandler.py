@@ -8,6 +8,7 @@ import json
 import requests
 from urllib.parse import urlencode, quote_plus
 import time
+from datetime import datetime
 import threading
 from pympler import asizeof
 
@@ -114,7 +115,7 @@ class DataLoggerQueue:
         try:
             r = requests.get(myurl, timeout=5) # Timeout in "sec"
 #            logger.debug(f"sendDataQueue: Request: {myurl}")
-            logger.debug(f"sendDataQueue: Timestamp: {inputtime} - Request StatusCode: {r.status_code} - New QueueSize {self.DataLoggerQueuelength }")
+            logger.debug(f"sendDataQueue: Time: {datetime.fromtimestamp(inputtime)} - Timestamp: {inputtime} - Request StatusCode: {r.status_code} - New QueueSize {self.DataLoggerQueuelength }")
             r.raise_for_status()
             self.DataLoggerAPIStatus=status.OK
             self.DataLoggerAPINextRetry = 0
@@ -161,8 +162,12 @@ class DataLoggerQueue:
             currentDict = []
             with open(filename) as fp:
                 for line in fp:
-                    currentDict = json.loads(line)
-                    self._queueAddItem(currentDict)
+                    try:
+                        currentDict = json.loads(line)
+                        self._queueAddItem(currentDict)
+                    except Exception as err:
+                        logger.error(f"Reload Data: Error with record: '{line}'")
+                        logger.error(f"Exception: '{Exception}' Error: '{err}'")
             os.remove(filename)
             logger.info(f"Reload {len(self.DataLoggerQueue)} records from file'{filename}'")
         else:
@@ -212,3 +217,6 @@ class DataLoggerQueue:
 
     def isAlive(self):
         return self.QueueMgmt.is_alive()
+
+    def TotalQueueLength(self):
+        return len(self.DataLoggerQueue)

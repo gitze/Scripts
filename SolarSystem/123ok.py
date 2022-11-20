@@ -306,7 +306,7 @@ signal.signal(signal.SIGTERM, handle_exit)
 if __name__ == '__main__':
     # create logger
     logger = logging.getLogger(__name__)
-    solar_logger.logger_setup('/home/pi/')
+    solar_logger.logger_setup('/home/pi/', LogFileLevel=logging.DEBUG, ErrorFileLevel=logging.ERROR, ConsoleLevel=logging.INFO)
     # 'application' code
     logger.info("Starting 123SmartBMS Monitoring")
     serialPort = getSerialPort()
@@ -314,7 +314,7 @@ if __name__ == '__main__':
     joinedRecord = dict()
     singleRecord = b""
     collectcycle = 0
-    fileout = open("/home/pi/123smartbms.log", "a")
+#    fileout = open("/home/pi/123smartbms.log", "a")
     EmonCMS = solar_threadhandler.DataLoggerQueue("123smartbms", emoncsm_url, emoncsm_apikey)
     EmonCMS.StartQueue()
     try:

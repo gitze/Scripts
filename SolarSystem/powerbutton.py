@@ -26,25 +26,26 @@ cycles = 0
 
 BUTTON_GPIO = 13
 LED_GPIO = 5
-RELAY2_GPIO = 18
+RELAY2_GPIO = 17
 RELAY_GPIO = 18
 
+def get_uptime():
+    with open('/proc/uptime', 'r') as f:
+        uptime_seconds = float(f.readline().split()[0])
+    return uptime_seconds
 
 def switchState(bool):
     return not bool
-
 
 def setLED(status):
 #    print(f"LED Status: {status}")
     GPIO.output(LED_GPIO, status)
     return status
 
-
 def switchLED(status):
     status = switchState(status)
     setLED(status)
     return status
-
 
 def setPower(status):
 #    print(f"Power Status: {status}")
@@ -123,6 +124,7 @@ try:
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(LED_GPIO, GPIO.OUT)      # LED is Output device
     GPIO.setup(RELAY_GPIO, GPIO.OUT)    # RELAY is Output device
+    GPIO.setup(RELAY2_GPIO, GPIO.OUT)    # RELAY is Output device
     GPIO.setup(BUTTON_GPIO, GPIO.IN, pull_up_down=GPIO.PUD_UP) # BUTTON is INPUT device
     # ggf auf PUD_DOWN ändern
     # GPIO.setup(BUTTON_GPIO, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
@@ -134,6 +136,10 @@ try:
     # INIT LED & RELAY
     setLED(LED_state)
     setPower(RELAY_state)
+    GPIO.output(RELAY2_GPIO, not RELAY_state)
+    GPIO.output(RELAY2_GPIO, not RELAY_state)
+
+ 
 
 
     def handle_exit(sig, frame):
@@ -157,6 +163,10 @@ try:
     # RELAY_CRON = solar_cron.solarcron('20 6,9,12,15,18 * * *', "RELAY01")
     RELAY_CRON = solar_cron.solarcron('15,45 8-22/2 * 3-10 *', "RELAY01")
 
+    RELAY2_CRON_ON =  solar_cron.solarcron('0 6-23 * * *', "RELAY02 ON")
+    RELAY2_CRON_OFF = solar_cron.solarcron('15 * * * *', "RELAY02 OFF")
+    
+
     while True:
         BUTTON_action = BUTTON01.getButtonAction()
         if (BUTTON_action == "PUSH"):
@@ -167,23 +177,29 @@ try:
                 RELAY_state = switchPower(RELAY_state)
 
         if (BUTTON_action == "HOLD"):
-            #cycles += 1
-            # if BUTTON_action == "hold":
-            #     # long hold ....
-            #     # ggf Action bei langem halten?
-            #     cycles += 1
-            # else:
-            #     BUTTON_action = "hold"
-            logger.info(f"BUTTON hold over 10000ms - rebooting")
-            time.sleep(1.00)
-            if (Button01.duration > 10000):
+            if (BUTTON01.duration > 10000):
+                logger.info(f"BUTTON hold over 10000ms - rebooting")
+                time.sleep(1.00)
                 os.system("/usr/sbin/reboot")
 
         if (BUTTON_action == "RELEASE"):
             #cycles = 0
             pass
+# ############################            
+# RELAY 2
+# ############################
+        if (RELAY2_CRON_ON.trigger()):
+            logger.info("Relay2 on")
+            time.sleep(0.5)
+            GPIO.output(RELAY2_GPIO, True)
+        if (RELAY2_CRON_OFF.trigger()):
+            logger.info("Relay2 off")
+            time.sleep(0.5)
+            GPIO.output(RELAY2_GPIO, False)
 
-
+# ############################            
+# RELAY 1
+# ############################
         if (AUTOMATIC_state == False):
             if (RELAY_CRON.trigger()):
                 AUTOMATIC_StartTime = int(time.time())  # epoch seconds
@@ -214,9 +230,8 @@ try:
 except KeyboardInterrupt:
     # Programm wird beendet wenn CTRL+C gedrückt wird.
     logger.info('Programm wird beendet wenn CTRL+C gedrückt wird.')
-except (KeyboardInterrupt, SystemExit):
-    # Programm wird beendet wenn CTRL+C gedrückt wird.
-    logger.info('Programm manuell unterbrochen')
+except (SystemExit):
+    logger.info('Programm wg. StemExit Call unterbrochen')
 except Exception as e:
     logger.critical(f'Unerwarteter Abbruch: {str(e)}')
     GPIO.cleanup()
